@@ -87,6 +87,9 @@ G_GNUC_INTERNAL GDataFeed *_gdata_feed_new (const gchar *title, const gchar *id,
 G_GNUC_INTERNAL GDataFeed *_gdata_feed_new_from_xml (GType feed_type, const gchar *xml, gint length, GType entry_type,
                                                      GDataQueryProgressCallback progress_callback, gpointer progress_user_data, gboolean is_async,
                                                      GError **error) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
+G_GNUC_INTERNAL GDataFeed *_gdata_feed_new_from_json (GType feed_type, const gchar *json, gint length, GType entry_type,
+                                                     GDataQueryProgressCallback progress_callback, gpointer progress_user_data, gboolean is_async,
+                                                     GError **error) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;                                                     
 G_GNUC_INTERNAL void _gdata_feed_add_entry (GDataFeed *self, GDataEntry *entry);
 G_GNUC_INTERNAL gpointer _gdata_feed_parse_data_new (GType entry_type, GDataQueryProgressCallback progress_callback, gpointer progress_user_data,
                                                      gboolean is_async);

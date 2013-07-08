@@ -632,6 +632,25 @@ _gdata_feed_new_from_xml (GType feed_type, const gchar *xml, gint length, GType 
 	return feed;
 }
 
+GDataFeed *
+_gdata_feed_new_from_json (GType feed_type, const gchar *json, gint length, GType entry_type,
+                          GDataQueryProgressCallback progress_callback, gpointer progress_user_data, gboolean is_async, GError **error)
+{
+	ParseData *data;
+	GDataFeed *feed;
+
+	g_return_val_if_fail (g_type_is_a (feed_type, GDATA_TYPE_FEED), NULL);
+	g_return_val_if_fail (json != NULL, NULL);
+	g_return_val_if_fail (g_type_is_a (entry_type, GDATA_TYPE_ENTRY), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	data = _gdata_feed_parse_data_new (entry_type, progress_callback, progress_user_data, is_async);
+	feed = GDATA_FEED (_gdata_parsable_new_from_json (feed_type, json, length, data, error));
+	_gdata_feed_parse_data_free (data);
+
+	return feed;
+}
+
 /**
  * gdata_feed_get_entries:
  * @self: a #GDataFeed
