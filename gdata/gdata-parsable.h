@@ -23,6 +23,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <libxml/parser.h>
+#include <json-glib/json-glib.h>
 
 G_BEGIN_DECLS
 
@@ -91,6 +92,9 @@ typedef struct {
 	void (*get_xml) (GDataParsable *parsable, GString *xml_string);
 	void (*get_namespaces) (GDataParsable *parsable, GHashTable *namespaces);
 
+	gboolean (*parse_json) (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
+	gboolean (*post_parse_json) (GDataParsable *parsable, gpointer user_data, GError **error);
+	
 	const gchar *element_name;
 	const gchar *element_namespace;
 } GDataParsableClass;

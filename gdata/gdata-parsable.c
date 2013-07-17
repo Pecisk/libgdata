@@ -36,6 +36,7 @@
 #include <glib/gi18n-lib.h>
 #include <string.h>
 #include <libxml/parser.h>
+#include <json-glib/json-glib.h>
 
 #include "gdata-parsable.h"
 #include "gdata-private.h"
@@ -317,6 +318,78 @@ _gdata_parsable_new_from_xml_node (GType parsable_type, xmlDoc *doc, xmlNode *no
 		return NULL;
 	}
 
+	return parsable;
+}
+
+GDataParsable *
+_gdata_parsable_new_from_json (GType parsable_type, const gchar *json, gint length, gpointer user_data, GError **error)
+{
+	JsonParser *parser;
+	JsonNode *root_node;
+	GDataParsable *parsable;
+
+	g_return_val_if_fail (g_type_is_a (parsable_type, GDATA_TYPE_PARSABLE), NULL);
+	g_return_val_if_fail (json != NULL && *json != '\0', NULL);
+	g_return_val_if_fail (length >= -1, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (length == -1)
+		length = strlen (json);
+
+	parser = json_parser_new ();
+	if (!json_parser_load_from_data (parser, json, length, error))
+		return NULL;
+	/* FIXME do we need explictly check if json has returned error correctly? */
+	
+	root_node = json_parser_get_root (parser);
+
+	parsable = _gdata_parsable_new_from_json_node (parsable_type, root_node, user_data, error);
+	g_object_unref (parser);
+
+	return parsable;
+}
+
+GDataParsable *
+_gdata_parsable_new_from_json_node (GType parsable_type, JsonNode *root_node, gpointer user_data, GError **error)
+{
+	GDataParsable *parsable;
+	GDataParsableClass *klass;
+	JsonReader *reader;
+	
+	g_return_val_if_fail (g_type_is_a (parsable_type, GDATA_TYPE_PARSABLE), NULL);
+	g_return_val_if_fail (parser != NULL, NULL);
+	g_return_val_if_fail (node != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	parsable = g_object_new (parsable_type, "constructed-from-xml", TRUE, NULL);
+
+	klass = GDATA_PARSABLE_GET_CLASS (parsable);
+	if (klass->parse_json == NULL) {
+		g_object_unref (parsable);
+		return NULL;
+	}
+
+	g_assert (klass->element_name != NULL);
+	
+	reader = json_reader_new (root_node);
+
+	/* Parse each child element */
+	for(int i=0;i<json_reader_count_elements (reader);i++) {
+		g_return_val_if_fail (json_reader_read_element (reader, i), NULL);
+		if (klass->parse_json (parsable, reader, user_data, error) == FALSE) {
+			g_object_unref(reader);
+			g_object_unref (parsable);
+			return NULL;
+	}
+
+	/* Call the post-parse function */
+	if (klass->post_parse_json != NULL &&
+	    klass->post_parse_json (parsable, user_data, error) == FALSE) {
+		g_object_unref (parsable);
+		return NULL;
+	}
+
+	g_object_unref(reader);
 	return parsable;
 }
 
