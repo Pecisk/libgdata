@@ -361,6 +361,8 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonNode *root_node, gp
 	g_return_val_if_fail (node != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
+	/* indicator property which allows distinguish between locally created and server based objects */
+	/* as it is used for non-xml tasks, and adding another one for json would be dublication */
 	parsable = g_object_new (parsable_type, "constructed-from-xml", TRUE, NULL);
 
 	klass = GDATA_PARSABLE_GET_CLASS (parsable);
