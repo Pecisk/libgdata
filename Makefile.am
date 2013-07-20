@@ -621,7 +621,7 @@ MAINTAINERCLEANFILES += \
 	po/remove-potcdate.sin \
 	$(NULL)
 
-DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-docŠķiet ka tuvajos Austrumos varētu būt k
+DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-doc
 
 # pkgconfig data
 pkgconfigdir = $(libdir)/pkgconfig
