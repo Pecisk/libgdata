@@ -33,6 +33,7 @@
 #include <glib/gi18n-lib.h>
 #include <libxml/parser.h>
 #include <string.h>
+#include <json-glib/json-glib.h>
 
 #include "gdata-entry.h"
 #include "gdata-types.h"
@@ -55,6 +56,8 @@ static void pre_get_xml (GDataParsable *parsable, GString *xml_string);
 static void get_xml (GDataParsable *parsable, GString *xml_string);
 static void get_namespaces (GDataParsable *parsable, GHashTable *namespaces);
 static gchar *get_entry_uri (const gchar *id) G_GNUC_WARN_UNUSED_RESULT;
+static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError *error);
+static gboolean post_parse_json (GDataParasable *parsable, JsonReader *reader, gpointer user_data, GError *error);
 
 struct _GDataEntryPrivate {
 	gchar *title;
@@ -112,6 +115,9 @@ gdata_entry_class_init (GDataEntryClass *klass)
 	parsable_class->get_namespaces = get_namespaces;
 	parsable_class->element_name = "entry";
 
+	parsable_class->parse_json = parse_json;
+	parsable_class->post_parse_json = post_parse_json;
+	
 	klass->get_entry_uri = get_entry_uri;
 
 	/**
@@ -582,6 +588,34 @@ get_entry_uri (const gchar *id)
 	/* We assume the entry ID is also its entry URI; subclasses can override this
 	 * if the service they implement has a convoluted API */
 	return g_strdup (id);
+}
+
+static gboolean
+parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
+{
+	gboolean success;
+	GDataEntryPrivate *priv = GDATA_ENTRY (parsable)->priv;
+	/* selfLink in JSON is the same as content entry in XML */
+	if (gdata_parser_string_from_json_member (reader, "title", P_DEFAULT, &(priv->title), &success, error) == TRUE ||
+	    gdata_parser_string_from_json_member (reader, "id", P_DEFAULT, &(priv->title), &success, error) == TRUE)
+	    {
+			return success;
+		}
+
+	return GDATA_PARSABLE_CLASS (gdata_entry_parent_class)->parse_xml (parsable, doc, node, user_data, error);
+}
+
+static gboolean
+post_parse_json (GDataParsable *parsable, gpointer user_data, GError **error)
+{
+	GDataEntryPrivate *priv = GDATA_ENTRY (parsable)->priv;
+
+	/* Reverse our lists of stuff */
+	priv->categories = g_list_reverse (priv->categories);
+	priv->links = g_list_reverse (priv->links);
+	priv->authors = g_list_reverse (priv->authors);
+
+	return TRUE;
 }
 
 /**

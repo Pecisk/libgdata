@@ -909,7 +909,9 @@ __gdata_service_query (GDataService *self, GDataAuthorizationDomain *domain, con
 	GDataServiceClass *klass;
 	GDataFeed *feed;
 	SoupMessage *message;
-
+	SoupMessageHeaders *headers;
+	gchar *content_type;
+	
 	message = _gdata_service_query (self, domain, feed_uri, query, cancellable, error);
 	if (message == NULL)
 		return NULL;
@@ -917,8 +919,8 @@ __gdata_service_query (GDataService *self, GDataAuthorizationDomain *domain, con
 	g_assert (message->response_body->data != NULL);
 	klass = GDATA_SERVICE_GET_CLASS (self);
 	
-	SoupMessageHeaders *headers = message->response_headers;
-	gchar *content_type = soup_message_headers_get_content_type (headers, NULL);
+	headers = message->response_headers;
+	content_type = soup_message_headers_get_content_type (headers, NULL);
 	if (strncmp (content_type, "application/json", 16) == 0) {
 		g_debug("JSON content type detected.\n");
 		feed = _gdata_feed_new_from_json (klass->feed_type, message->response_body->data, message->response_body->length, entry_type,
@@ -928,7 +930,7 @@ __gdata_service_query (GDataService *self, GDataAuthorizationDomain *domain, con
 		feed = _gdata_feed_new_from_xml (klass->feed_type, message->response_body->data, message->response_body->length, entry_type,
 										progress_callback, progress_user_data, is_async, error);
 	}
-	soup_message_headers_free (headers);
+
 	g_object_unref (message);
 
 	if (feed == NULL)

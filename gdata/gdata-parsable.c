@@ -52,6 +52,7 @@ static void gdata_parsable_get_property (GObject *object, guint property_id, GVa
 static void gdata_parsable_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec);
 static void gdata_parsable_finalize (GObject *object);
 static gboolean real_parse_xml (GDataParsable *parsable, xmlDoc *doc, xmlNode *node, gpointer user_data, GError **error);
+static gboolean real_parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
 
 struct _GDataParsablePrivate {
 	GString *extra_xml;
@@ -76,6 +77,7 @@ gdata_parsable_class_init (GDataParsableClass *klass)
 	gobject_class->set_property = gdata_parsable_set_property;
 	gobject_class->finalize = gdata_parsable_finalize;
 	klass->parse_xml = real_parse_xml;
+	klass->parse_json = real_parse_json;
 
 	/**
 	 * GDataParsable:constructed-from-xml:
@@ -176,6 +178,22 @@ real_parse_xml (GDataParsable *parsable, xmlDoc *doc, xmlNode *node, gpointer us
 	}
 	xmlFree (namespaces);
 
+	return TRUE;
+}
+
+static gboolean
+real_parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
+{
+	const gchar *name;
+	GValue *value;
+	
+	/* Unhandled JSON */
+	name = json_reader_get_member_name (reader);
+	json_node_get_value (json_reader_get_value (reader), value);
+	
+	g_string_append (parsable->priv->extra_xml, name);
+	g_debug("Unhandled JSON in %s: %s", G_OBJECT_TYPE_NAME (parsable), name);
+	
 	return TRUE;
 }
 
@@ -357,8 +375,7 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonNode *root_node, gp
 	JsonReader *reader;
 	
 	g_return_val_if_fail (g_type_is_a (parsable_type, GDATA_TYPE_PARSABLE), NULL);
-	g_return_val_if_fail (parser != NULL, NULL);
-	g_return_val_if_fail (node != NULL, NULL);
+	g_return_val_if_fail (root_node != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* indicator property which allows distinguish between locally created and server based objects */
@@ -376,12 +393,15 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonNode *root_node, gp
 	reader = json_reader_new (root_node);
 
 	/* Parse each child element */
-	for(int i=0;i<json_reader_count_elements (reader);i++) {
+	for(int i=0;i<json_reader_count_members (reader);i++) {
 		g_return_val_if_fail (json_reader_read_element (reader, i), NULL);
 		if (klass->parse_json (parsable, reader, user_data, error) == FALSE) {
 			g_object_unref(reader);
 			g_object_unref (parsable);
 			return NULL;
+		}
+		// get out of root object
+		json_reader_end_member (reader);
 	}
 
 	/* Call the post-parse function */

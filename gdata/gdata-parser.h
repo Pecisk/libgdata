@@ -80,6 +80,8 @@ gboolean gdata_parser_object_from_element_setter (xmlNode *element, const gchar 
                                                   gboolean *success, GError **error);
 gboolean gdata_parser_object_from_element (xmlNode *element, const gchar *element_name, GDataParserOptions options, GType object_type,
                                            gpointer /* GDataParsable ** */ _output, gboolean *success, GError **error);
+gboolean gdata_parser_string_from_json_member (JsonReader *reader, const gchar *element_name, GDataParserOptions options,
+                                           gchar **output, gboolean *success, GError **error);
 
 void gdata_parser_string_append_escaped (GString *xml_string, const gchar *pre, const gchar *element_content, const gchar *post);
 gchar *gdata_parser_utf8_trim_whitespace (const gchar *s) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;

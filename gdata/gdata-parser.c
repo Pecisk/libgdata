@@ -673,6 +673,73 @@ gdata_parser_object_from_element (xmlNode *element, const gchar *element_name, G
 	return TRUE;
 }
 
+/*
+ * gdata_parser_string_from_element:
+ * @element: the element to check against
+ * @element_name: the name of the element to parse
+ * @options: a bitwise combination of parsing options from #GDataParserOptions, or %P_NONE
+ * @output: the return location for the parsed string content
+ * @success: the return location for a value which is %TRUE if the string was parsed successfully, %FALSE if an error was encountered,
+ * and undefined if @element didn't match @element_name
+ * @error: a #GError, or %NULL
+ *
+ * Gets the string content of @element if its name is @element_name, subject to various checks specified by @options.
+ *
+ * If @element doesn't match @element_name, %FALSE will be returned, @error will be unset and @success will be unset.
+ *
+ * If @element matches @element_name but one of the checks specified by @options fails, %TRUE will be returned, @error will be set to a
+ * %GDATA_SERVICE_ERROR_PROTOCOL_ERROR error and @success will be set to %FALSE.
+ *
+ * If @element matches @element_name and all of the checks specified by @options pass, %TRUE will be returned, @error will be unset and
+ * @success will be set to %TRUE.
+ *
+ * The reason for returning the success of the parsing in @success is so that calls to gdata_parser_string_from_element() can be chained
+ * together in a large "or" statement based on their return values, for the purposes of determining whether any of the calls matched
+ * a given @element. If any of the calls to gdata_parser_string_from_element() return %TRUE, the value of @success can be examined.
+ *
+ * Return value: %TRUE if @element matched @element_name, %FALSE otherwise
+ *
+ * Since: 0.7.0
+ */
+gboolean
+gdata_parser_string_from_json_member (JsonReader *reader, const gchar *element_name, GDataParserOptions options,
+                                  gchar **output, gboolean *success, GError **error)
+{
+	gchar *text;
+
+	/* Check if there's such element */
+	if (!json_reader_read_member (reader, element_name)) {
+		json_reader_end_member (reader);
+		return FALSE;
+	}
+
+	/* Check if the output string has already been set */
+	if (options & P_NO_DUPES && *output != NULL) {
+		//*success = gdata_parser_error_duplicate_element (element, error);
+		// FIXME needs to change these functions to something can handle json
+		return TRUE;
+	}
+
+	/* Get the string and check it for NULLness or emptiness */
+	text = json_reader_get_string_value (reader);
+	if ((options & P_REQUIRED && text == NULL) || (options & P_NON_EMPTY && text != NULL && *text == '\0')) {
+		g_free (text);
+		json_reader_end_member (reader);
+		//*success = gdata_parser_error_required_content_missing (element, error);
+		return TRUE;
+	} else if (options & P_DEFAULT && (text == NULL || *text == '\0')) {
+		text = (gchar*) g_strdup ("");
+	}
+
+	/* Success! */
+	g_free (*output);
+	*output = (gchar*) text;
+	*success = TRUE;
+
+	return TRUE;
+}
+
+
 void
 gdata_parser_string_append_escaped (GString *xml_string, const gchar *pre, const gchar *element_content, const gchar *post)
 {
