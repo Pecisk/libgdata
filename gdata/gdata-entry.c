@@ -595,14 +595,20 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 {
 	gboolean success;
 	GDataEntryPrivate *priv = GDATA_ENTRY (parsable)->priv;
-	/* selfLink in JSON is the same as content entry in XML */
+	
+	/* selfLink in JSON is the same as 'content' entry in XML */
 	if (gdata_parser_string_from_json_member (reader, "title", P_DEFAULT, &(priv->title), &success, error) == TRUE ||
-	    gdata_parser_string_from_json_member (reader, "id", P_DEFAULT, &(priv->title), &success, error) == TRUE)
-	    {
+	    gdata_parser_string_from_json_member (reader, "id", P_DEFAULT, &(priv->id), &success, error) == TRUE ||
+	    gdata_parser_int64_time_from_json_member (reader, "updated", P_REQUIRED | P_NO_DUPES, &(priv->updated), &success, error) == TRUE) {
 			return success;
+		} else if (strcmp (json_reader_get_member_name (reader), "selfLink", 8) == 0) {
+			priv->content = json_reader_get_string_value (reader);
+			priv->content_is_uri = TRUE;
+
+			return TRUE;
 		}
 
-	return GDATA_PARSABLE_CLASS (gdata_entry_parent_class)->parse_xml (parsable, doc, node, user_data, error);
+	return GDATA_PARSABLE_CLASS (gdata_entry_parent_class)->parse_json (parsable, doc, node, user_data, error);
 }
 
 static gboolean

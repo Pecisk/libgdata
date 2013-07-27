@@ -396,12 +396,15 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonNode *root_node, gp
 	for(int i=0;i<json_reader_count_members (reader);i++) {
 		g_return_val_if_fail (json_reader_read_element (reader, i), NULL);
 		if (klass->parse_json (parsable, reader, user_data, error) == FALSE) {
-			g_object_unref(reader);
+			g_object_unref (reader);
 			g_object_unref (parsable);
 			return NULL;
 		}
-		// get out of root object
-		json_reader_end_member (reader);
+		/* get out of root object */
+		/* FIXME this could be wrong, have to be tested, have to use */
+		/* either json_reader_end_member, as we access root node members here */
+		/* or have to ditch read_element idea and have to use count_members/list_members combo */ 
+		json_reader_end_element (reader);
 	}
 
 	/* Call the post-parse function */

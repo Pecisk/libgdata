@@ -600,7 +600,7 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 	
 	if (strcmp (json_reader_get_member_name (reader), "items", 5)) {
 		// loop trough elements array
-		for (i=0;i<json_reader_count_elements (reader);i++) {
+		for (int i=0;i<json_reader_count_elements (reader);i++) {
 			json_reader_read_element (reader, i);
 			
 			GDataEntry *entry;
@@ -619,7 +619,7 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 				_gdata_feed_call_progress_callback (self, data, entry);
 			_gdata_feed_add_entry (self, entry);
 			g_object_unref (entry);
-			// FIXME when in object use json_reader_end_member ()
+			
 			json_reader_end_element ();
 		}
 	}
