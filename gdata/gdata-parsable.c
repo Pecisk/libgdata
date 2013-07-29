@@ -401,9 +401,8 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonNode *root_node, gp
 			return NULL;
 		}
 		/* get out of root object */
-		/* FIXME this could be wrong, have to be tested, have to use */
-		/* either json_reader_end_member, as we access root node members here */
-		/* or have to ditch read_element idea and have to use count_members/list_members combo */ 
+		/* FIXME this is much slower than proper read_member usage */
+		/* can be replaced by count_members/list_members */
 		json_reader_end_element (reader);
 	}
 
