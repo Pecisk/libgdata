@@ -604,7 +604,6 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 		} else if (strcmp (json_reader_get_member_name (reader), "selfLink", 8) == 0) {
 			priv->content = json_reader_get_string_value (reader);
 			priv->content_is_uri = TRUE;
-
 			return TRUE;
 		}
 
@@ -622,6 +621,23 @@ post_parse_json (GDataParsable *parsable, gpointer user_data, GError **error)
 	priv->authors = g_list_reverse (priv->authors);
 
 	return TRUE;
+}
+
+static void
+get_json (GDataParsable *parsable, GString *json_string)
+{
+	GDataEntryPrivate *priv = GDATA_ENTRY (parsable)->priv;
+
+	gdata_parser_string_append_escaped (json_string, "\"title\": \"", priv->title, "\",");
+
+	if (priv->id != NULL)
+		gdata_parser_string_append_escaped (json_string, "\"id\": \"", priv->id, "\",");
+
+	if (priv->updated != -1) {
+		gchar *updated = gdata_parser_int64_to_iso8601 (priv->updated);
+		g_string_append_printf (xml_string, "\"updated\": \"%s\",", updated);
+		g_free (updated);
+	}
 }
 
 /**

@@ -87,6 +87,7 @@ gboolean gdata_parser_string_from_json_member (JsonReader *reader, const gchar *
                                            gchar **output, gboolean *success, GError **error);
 gboolean gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *element_name, GDataParserOptions options,
                                                gint64 *output, gboolean *success, GError **error);
+gboolean gdata_parser_boolean_from_json_member (JsonReader *reader, const gchar *member_name, gboolean *output, GDataParserOptions options, gboolean *success, GError **error);
 
 void gdata_parser_string_append_escaped (GString *xml_string, const gchar *pre, const gchar *element_content, const gchar *post);
 gchar *gdata_parser_utf8_trim_whitespace (const gchar *s) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;

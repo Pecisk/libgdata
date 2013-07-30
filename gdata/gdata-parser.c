@@ -23,7 +23,10 @@
 #include <glib/gi18n-lib.h>
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
 #include <libxml/parser.h>
+#include <json-glib/json-glib.h>
+
 
 #include "gdata-parser.h"
 #include "gdata-service.h"
@@ -850,6 +853,37 @@ gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *eleme
 	g_free (text);
 	*success = TRUE;
 
+	return TRUE;
+}
+
+/* FIXME API description */
+gboolean
+gdata_parser_boolean_from_json_member (JsonReader *reader, const gchar *member_name, gboolean *output, GDataParserOptions options, gboolean *success, GError **error)
+{
+	gchar *text;
+	
+	/* Check if there's such element */
+	if (strcmp (json_reader_get_member_name (reader), element_name, strlen(element_name)) != 0) {
+		return FALSE;
+	}
+	
+	/* Get the string and check it for NULLness */
+	text = json_reader_get_string_value (reader);
+	if (options & P_REQUIRED && (text == NULL || *text == '\0')) {
+		g_free (text);
+		*success = gdata_parser_error_required_json_content_missing (reader, error);
+		return TRUE;
+	}
+	if (strcmp (text, "True", 4) == 0) {
+		*output = TRUE;
+	} else if (strcmp (text, "False", 5) == 0) {
+		*output = FALSE;
+	} else {
+		/* FIXME issue warning */
+		return FALSE;
+	}
+	
+	g_free(text);
 	return TRUE;
 }
 
