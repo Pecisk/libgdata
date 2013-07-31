@@ -137,4 +137,10 @@
 #include <gdata/services/documents/gdata-documents-enums.h>
 #include <gdata/services/documents/gdata-documents-upload-query.h>
 
+/* Google Tasks */
+#include <gdata/services/tasks/gdata-tasks-service.h>
+#include <gdata/services/tasks/gdata-tasks-task.h>
+#include <gdata/services/tasks/gdata-tasks-tasklist.h>
+#include <gdata/services/tasks/gdata-tasks-query.h>
+
 #endif /* !GDATA_H */

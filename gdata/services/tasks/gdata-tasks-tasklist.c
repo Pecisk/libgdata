@@ -60,7 +60,6 @@ gdata_tasks_tasklist_class_init (GDataTasksTasklistClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	GDataParsableClass *parsable_class = GDATA_PARSABLE_CLASS (klass);
-	GDataEntryClass *entry_class = GDATA_ENTRY_CLASS (klass);
 
 	g_type_class_add_private (klass, sizeof (GDataTasksTasklistPrivate));
 
@@ -84,10 +83,6 @@ gdata_tasks_tasklist_constructor (GType type, guint n_construct_params, GObjectC
 
 	/* Chain up to the parent class */
 	object = G_OBJECT_CLASS (gdata_tasks_tasklist_parent_class)->constructor (type, n_construct_params, construct_params);
-
-	if (_gdata_parsable_is_constructed_from_xml (GDATA_PARSABLE (object)) == FALSE) {
-		GDataTasksTasklistPrivate *priv = GDATA_TASKS_TASKLIST (object)->priv;
-	}
 
 	return object;
 }

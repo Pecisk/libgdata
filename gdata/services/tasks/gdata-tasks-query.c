@@ -169,8 +169,6 @@ gdata_tasks_query_init (GDataTasksQuery *self)
 static void
 gdata_tasks_query_finalize (GObject *object)
 {
-	GDataTasksQueryPrivate *priv = GDATA_TASKS_QUERY (object)->priv;
-
 	/* Chain up to the parent class */
 	G_OBJECT_CLASS (gdata_tasks_query_parent_class)->finalize (object);
 }

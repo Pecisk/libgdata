@@ -40,16 +40,16 @@ G_BEGIN_DECLS
 /**
  * GDataTasksService:
  *
- * All the fields in the #GDataCalendarService structure are private and should never be accessed directly.
+ * All the fields in the #GDataTasksService structure are private and should never be accessed directly.
  **/
 typedef struct {
 	GDataService parent;
 } GDataTasksService;
 
 /**
- * GDataCalendarServiceClass:
+ * GDataTasksServiceClass:
  *
- * All the fields in the #GDataCalendarServiceClass structure are private and should never be accessed directly.
+ * All the fields in the #GDataTasksServiceClass structure are private and should never be accessed directly.
  **/
 typedef struct {
 	/*< private >*/
