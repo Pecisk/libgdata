@@ -907,7 +907,7 @@ __gdata_service_query (GDataService *self, GDataAuthorizationDomain *domain, con
                        gboolean is_async)
 {
 	GDataServiceClass *klass;
-	GDataFeed *feed;
+	GDataFeed *feed = NULL;
 	SoupMessage *message;
 	SoupMessageHeaders *headers;
 	gchar *content_type;
@@ -920,7 +920,7 @@ __gdata_service_query (GDataService *self, GDataAuthorizationDomain *domain, con
 	klass = GDATA_SERVICE_GET_CLASS (self);
 	
 	headers = message->response_headers;
-	content_type = soup_message_headers_get_content_type (headers, NULL);
+	content_type = (gchar*) soup_message_headers_get_content_type (headers, NULL);
 	if (strncmp (content_type, "application/json", 16) == 0) {
 		g_debug("JSON content type detected.\n");
 		feed = _gdata_feed_new_from_json (klass->feed_type, message->response_body->data, message->response_body->length, entry_type,

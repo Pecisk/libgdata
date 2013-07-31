@@ -58,8 +58,8 @@ static void _gdata_feed_add_category (GDataFeed *self, GDataCategory *category);
 static void _gdata_feed_add_link (GDataFeed *self, GDataLink *link);
 static void _gdata_feed_add_author (GDataFeed *self, GDataAuthor *author);
 
-static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError *error);
-static gboolean post_parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError *error);
+static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
+static gboolean post_parse_json (GDataParsable *parsable, gpointer user_data, GError **error);
 
 struct _GDataFeedPrivate {
 	GList *entries;
@@ -594,13 +594,13 @@ get_namespaces (GDataParsable *parsable, GHashTable *namespaces)
 static gboolean
 parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
 {
-	gboolean success;
+	int i;
 	GDataFeed *self = GDATA_FEED (parsable);
 	ParseData *data = user_data;
 	
-	if (strcmp (json_reader_get_member_name (reader), "items", 5)) {
+	if (strcmp (json_reader_get_member_name (reader), "items")) {
 		// loop trough elements array
-		for (int i=0;i<json_reader_count_elements (reader);i++) {
+		for (i=0;i<json_reader_count_elements (reader);i++) {
 			json_reader_read_element (reader, i);
 			
 			GDataEntry *entry;
@@ -620,7 +620,7 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 			_gdata_feed_add_entry (self, entry);
 			g_object_unref (entry);
 			
-			json_reader_end_element ();
+			json_reader_end_element (reader);
 		}
 	}
 	else {

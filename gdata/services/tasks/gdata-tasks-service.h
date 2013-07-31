@@ -26,7 +26,7 @@
 #include <gdata/gdata-service.h>
 #include <gdata/gdata-query.h>
 #include <gdata/services/tasks/gdata-tasks-tasklist.h>
-#include <gdata/services/calendar/gdata-tasks-task.h>
+#include <gdata/services/tasks/gdata-tasks-task.h>
 
 G_BEGIN_DECLS
 

@@ -246,21 +246,21 @@ gdata_tasks_query_set_property (GObject *object, guint property_id, const GValue
 static void
 get_query_uri (GDataQuery *self, const gchar *feed_uri, GString *query_uri, gboolean *params_started)
 {
-	GDataCalendarQueryPrivate *priv = GDATA_CALENDAR_QUERY (self)->priv;
+	GDataTasksQueryPrivate *priv = GDATA_TASKS_QUERY (self)->priv;
 
 	#define APPEND_SEP g_string_append_c (query_uri, (*params_started == FALSE) ? '?' : '&'); *params_started = TRUE;
 
-	if (GDATA_QUERY_CLASS (gdata_calendar_query_parent_class)->max_results > 0) {
+	if (gdata_query_get_max_results (GDATA_QUERY(self)) > 0) {
 		APPEND_SEP
-		g_string_append_printf (query_uri, "maxResults=%u", GDATA_QUERY_CLASS (gdata_calendar_query_parent_class)->max_results);
+		g_string_append_printf (query_uri, "maxResults=%u", gdata_query_get_max_results (GDATA_QUERY(self)));
 	}
 
-	if (GDATA_QUERY_CLASS (gdata_calendar_query_parent_class)->updated_min != -1) {
+	if (gdata_query_get_updated_min (GDATA_QUERY(self)) != -1) {
 		gchar *updated_min;
 
 		APPEND_SEP
 		g_string_append (query_uri, "updatedMin=");
-		updated_min = gdata_parser_int64_to_iso8601 (GDATA_QUERY_CLASS (gdata_calendar_query_parent_class)->updated_min);
+		updated_min = gdata_parser_int64_to_iso8601 (gdata_query_get_updated_min (GDATA_QUERY(self)));
 		g_string_append (query_uri, updated_min);
 		g_free (updated_min);
 	}
@@ -373,8 +373,8 @@ gdata_tasks_query_get_completed_max (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_completed_max (GDataTasksQuery *self, gint64 completed_max)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
-	g_return_if_fail (start_max >= -1);
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
+	g_return_if_fail (completed_max >= -1);
 	
 	self->priv->completed_max = completed_max;
 	g_object_notify (G_OBJECT (self), "completed-max");
@@ -400,7 +400,7 @@ gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
  * @self: a #GDataTasksQuery
  * @completed_max: lower bound for a task's completion date by UNIX timestamp, or  <code class="literal">-1</code>
  * 
- * Sets the #GDataCalendarQuery:completed-min property of the #GDataCalendarQuery
+ * Sets the #GDataTasksQuery:completed-min property of the #GDataTasksQuery
  * to the new time/date, @completed_min.
  * 
  * Set @completed_max to <code class="literal">-1</code> to unset the property in the query URI.
@@ -408,7 +408,7 @@ gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_completed_min (GDataTasksQuery *self, gint64 completed_min)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 	g_return_if_fail (completed_min >= -1);
 	
 	self->priv->completed_min = completed_min;
@@ -443,8 +443,8 @@ gdata_tasks_query_get_due_max (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
-	g_return_if_fail (start_max >= -1);
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
+	g_return_if_fail (due_max >= -1);
 	
 	self->priv->due_max = due_max;
 	g_object_notify (G_OBJECT (self), "due-max");
@@ -471,7 +471,7 @@ gdata_tasks_query_get_due_min (GDataTasksQuery *self)
  * @self: a #GDataTasksQuery
  * @due_max: lower bound for a task's due date by UNIX timestamp, or  <code class="literal">-1</code>
  * 
- * Sets the #GDataCalendarQuery:due-min property of the #GDataCalendarQuery
+ * Sets the #GDataTasksQuery:due-min property of the #GDataTasksQuery
  * to the new time/date, @due_min.
  * 
  * Set @due_max to <code class="literal">-1</code> to unset the property in the query URI.
@@ -479,7 +479,7 @@ gdata_tasks_query_get_due_min (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 	g_return_if_fail (due_min >= -1);
 	
 	self->priv->due_min = due_min;
@@ -502,7 +502,7 @@ gdata_tasks_query_get_show_completed (GDataTasksQuery *self)
 }
 
 /**
- * gdata_calendar_query_set_show_completed:
+ * gdata_tasks_query_set_show_completed:
  * @self: a #GDataTasksQuery
  * @show_completed: %TRUE to show completed tasks, %FALSE otherwise
  *
@@ -513,7 +513,7 @@ gdata_tasks_query_get_show_completed (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_show_completed (GDataTasksQuery *self, gboolean show_completed)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 
 	self->priv->show_completed = show_completed;
 	g_object_notify (G_OBJECT (self), "show-completed");
@@ -535,7 +535,7 @@ gdata_tasks_query_get_show_deleted (GDataTasksQuery *self)
 }
 
 /**
- * gdata_calendar_query_set_show_deleted:
+ * gdata_tasks_query_set_show_deleted:
  * @self: a #GDataTasksQuery
  * @show_deleted: %TRUE to show deleted tasks, %FALSE otherwise
  *
@@ -546,9 +546,9 @@ gdata_tasks_query_get_show_deleted (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_show_deleted (GDataTasksQuery *self, gboolean show_deleted)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 
-	self->priv->show_completed = show_completed;
+	self->priv->show_deleted = show_deleted;
 	g_object_notify (G_OBJECT (self), "show-deleted");
 }
 
@@ -568,7 +568,7 @@ gdata_tasks_query_get_show_hidden (GDataTasksQuery *self)
 }
 
 /**
- * gdata_calendar_query_set_show_hidden:
+ * gdata_tasks_query_set_show_hidden:
  * @self: a #GDataTasksQuery
  * @show_hidden: %TRUE to show hidden tasks, %FALSE otherwise
  *
@@ -579,7 +579,7 @@ gdata_tasks_query_get_show_hidden (GDataTasksQuery *self)
 void
 gdata_tasks_query_set_show_hidden (GDataTasksQuery *self, gboolean show_hidden)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_QUERY (self));
+	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 
 	self->priv->show_hidden = show_hidden;
 	g_object_notify (G_OBJECT (self), "show-hidden");

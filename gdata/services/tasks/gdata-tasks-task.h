@@ -38,9 +38,9 @@ G_BEGIN_DECLS
 typedef struct _GDataTasksTaskPrivate	GDataTasksTaskPrivate;
 
 /**
- * GDataCalendarEvent:
+ * GDataTasksTask:
  *
- * All the fields in the #GDataCalendarEvent structure are private and should never be accessed directly.
+ * All the fields in the #GDataTasksTask structure are private and should never be accessed directly.
  **/
 typedef struct {
 	GDataEntry parent;
@@ -48,9 +48,9 @@ typedef struct {
 } GDataTasksTask;
 
 /**
- * GDataCalendarEventClass:
+ * GDataTasksTaskClass:
  *
- * All the fields in the #GDataCalendarEventClass structure are private and should never be accessed directly.
+ * All the fields in the #GDataTasksTaskClass structure are private and should never be accessed directly.
  **/
 typedef struct {
 	/*< private >*/
@@ -59,7 +59,7 @@ typedef struct {
 
 GType gdata_tasks_task_get_type (void) G_GNUC_CONST;
 
-GDataCalendarEvent *gdata_tasks_task_new (const gchar *id) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
+GDataTasksTask *gdata_tasks_task_new (const gchar *id) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
 
 const gchar *gdata_tasks_task_get_parent (GDataTasksTask *self) G_GNUC_PURE;
 void gdata_tasks_task_set_parent (GDataTasksTask *self, const gchar *parent);
@@ -73,10 +73,10 @@ gint64 gdata_tasks_task_get_due (GDataTasksTask *self);
 void gdata_tasks_task_set_due (GDataTasksTask *self, gint64 due);
 gint64 gdata_tasks_task_get_completed (GDataTasksTask *self);
 void gdata_tasks_task_set_completed (GDataTasksTask *self, gint64 completed);
-gboolean gdata_tasks_task_get_deleted (GDataCalendarEvent *self) G_GNUC_PURE;
-void gdata_tasks_task_set_deleted (GDataCalendarEvent *self, gboolean deleted);
-gboolean gdata_tasks_task_get_hidden (GDataCalendarEvent *self) G_GNUC_PURE;
-void gdata_tasks_task_set_hidden (GDataCalendarEvent *self, gboolean hidden);
+gboolean gdata_tasks_task_get_deleted (GDataTasksTask *self) G_GNUC_PURE;
+void gdata_tasks_task_set_deleted (GDataTasksTask *self, gboolean deleted);
+gboolean gdata_tasks_task_get_hidden (GDataTasksTask *self) G_GNUC_PURE;
+void gdata_tasks_task_set_hidden (GDataTasksTask *self, gboolean hidden);
 
 G_END_DECLS
 

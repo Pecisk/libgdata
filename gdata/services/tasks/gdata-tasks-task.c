@@ -18,67 +18,16 @@
  */
 
 /**
- * SECTION:gdata-calendar-event
- * @short_description: GData Calendar event object
+ * SECTION:gdata-tasks-task
+ * @short_description: GData Tasks task object
  * @stability: Unstable
- * @include: gdata/services/calendar/gdata-calendar-event.h
+ * @include: gdata/services/tasks/gdata-tasks-task.h
  *
- * #GDataCalendarEvent is a subclass of #GDataEntry to represent an event on a calendar from Google Calendar.
+ * #GDataTasksTask is a subclass of #GDataEntry to represent a task in a tasklist from Google Tasks.
  *
- * For more details of Google Calendar's GData API, see the <ulink type="http" url="http://code.google.com/apis/calendar/docs/2.0/reference.html">
+ * For more details of Google Tasks API, see the <ulink type="http" url="https://developers.google.com/google-apps/tasks/v1/reference/">
  * online documentation</ulink>.
  *
- * <example>
- * 	<title>Adding a New Event to the Default Calendar</title>
- * 	<programlisting>
- *	GDataCalendarService *service;
- *	GDataCalendarEvent *event, *new_event;
- *	GDataGDWhere *where;
- *	GDataGDWho *who;
- *	GDataGDWhen *when;
- *	GTimeVal current_time;
- *	GError *error = NULL;
- *
- *	/<!-- -->* Create a service *<!-- -->/
- *	service = create_calendar_service ();
- *
- *	/<!-- -->* Create the new event *<!-- -->/
- *	event = gdata_calendar_event_new (NULL);
- *
- *	gdata_entry_set_title (GDATA_ENTRY (event), "Event Title");
- *	gdata_entry_set_content (GDATA_ENTRY (event), "Event description. This should be a few sentences long.");
- *	gdata_calendar_event_set_status (event, GDATA_GD_EVENT_STATUS_CONFIRMED);
- *
- *	where = gdata_gd_where_new (NULL, "Description of the location", NULL);
- *	gdata_calendar_event_add_place (event, where);
- *	g_object_unref (where);
- *
- *	who = gdata_gd_who_new (GDATA_GD_WHO_EVENT_ORGANIZER, "John Smith", "john.smith@gmail.com");
- *	gdata_calendar_event_add_person (event, who);
- *	g_object_unref (who);
- *
- *	g_get_current_time (&current_time);
- *	when = gdata_gd_when_new (current_time.tv_sec, current_time.tv_sec + 3600, FALSE);
- *	gdata_calendar_event_add_time (event, when);
- *	g_object_unref (when);
- *
- *	/<!-- -->* Insert the event in the calendar *<!-- -->/
- *	new_event = gdata_calendar_service_insert_event (service, event, NULL, &error);
- *
- *	g_object_unref (event);
- *	g_object_unref (service);
- *
- *	if (error != NULL) {
- *		g_error ("Error inserting event: %s", error->message);
- *		g_error_free (error);
- *		return NULL;
- *	}
- *
- *	/<!-- -->* Do something with the new_event here, such as return it to the user or store its ID for later usage *<!-- -->/
- *
- *	g_object_unref (new_event);
- * 	</programlisting>
- * </example>
  **/
 
 #include <config.h>
@@ -124,14 +73,14 @@ enum {
 	PROP_HIDDEN,
 };
 
-G_DEFINE_TYPE (GDataTasksTaskPrivate, gdata_tasks_task, GDATA_TYPE_ENTRY)
+G_DEFINE_TYPE (GDataTasksTask, gdata_tasks_task, GDATA_TYPE_ENTRY)
 
 static void
 gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	GDataParsableClass *parsable_class = GDATA_PARSABLE_CLASS (klass);
-	GDataEntryClass *entry_class = GDATA_ENTRY_CLASS (klass);
+	//GDataEntryClass *entry_class = GDATA_ENTRY_CLASS (klass);
 
 	g_type_class_add_private (klass, sizeof (GDataTasksTaskPrivate));
 
@@ -246,7 +195,7 @@ gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 static void
 gdata_tasks_task_init (GDataTasksTask *self)
 {
-	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, GDATA_TYPE_CALENDAR_EVENT, GDataTasksTaskPrivate);
+	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, GDATA_TYPE_TASKS_TASK, GDataTasksTaskPrivate);
 	self->priv->due = -1;
 	self->priv->completed = -1;
 	/* FIXME make sure we don't have to initialise anything else */
@@ -265,7 +214,6 @@ gdata_tasks_task_constructor (GType type, guint n_construct_params, GObjectConst
 static void
 gdata_tasks_task_dispose (GObject *object)
 {
-	GDataTasksTaskPrivate *priv = GDATA_TASKS_TASK (object)->priv;
 
 	/* Chain up to the parent class */
 	G_OBJECT_CLASS (gdata_tasks_task_parent_class)->dispose (object);
@@ -323,9 +271,9 @@ gdata_tasks_task_get_property (GObject *object, guint property_id, GValue *value
 }
 
 static void
-gdata_calendar_event_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
+gdata_tasks_task_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
-	GDataCalendarEvent *self = GDATA_CALENDAR_EVENT (object);
+	GDataTasksTask *self = GDATA_TASKS_TASK (object);
 
 	switch (property_id) {
 		case PROP_PARENT:
@@ -360,7 +308,7 @@ gdata_calendar_event_set_property (GObject *object, guint property_id, const GVa
 }
 
 static gboolean
-parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError *error)
+parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
 {
 	gboolean success;
 	GDataTasksTask *self = GDATA_TASKS_TASK (parsable);
@@ -399,9 +347,9 @@ get_json (GDataParsable *parsable, GString *json_string)
 		gdata_parser_string_append_escaped (json_string, "\"notes\": \"", priv->notes, "\",");
 	if (priv->status != NULL)
 		gdata_parser_string_append_escaped (json_string, "\"status\": \"", priv->status, "\",");
-	if (priv->due != NULL)
+	if (priv->due != -1)
 		gdata_parser_string_append_escaped (json_string, "\"due\": \"", gdata_parser_int64_to_iso8601 (priv->due), "\",");
-	if (priv->completed != NULL)
+	if (priv->completed != -1)
 		gdata_parser_string_append_escaped (json_string, "\"completed\": \"", gdata_parser_int64_to_iso8601 (priv->completed), "\",");
 	
 	if(priv->deleted == TRUE)
@@ -419,7 +367,7 @@ get_json (GDataParsable *parsable, GString *json_string)
  * Return value: a new #GDataTasksTask; unref with g_object_unref()
  **/
 GDataTasksTask *
-gdata_calendar_event_new (const gchar *id)
+gdata_tasks_task_new (const gchar *id)
 {
 	return GDATA_TASKS_TASK (g_object_new (GDATA_TYPE_TASKS_TASK, "id", id, NULL));
 }
@@ -570,61 +518,129 @@ gdata_tasks_task_set_status (GDataTasksTask *self, const gchar *status)
 }
 
 /**
- * gdata_tasks_task_get_deleted:
- * @self: a #GDataCalendarEvent
+ * gdata_tasks_task_get_due:
+ * @self: a #GDataTasksTask
  *
- * Gets the #GDataCalendarEvent:deleted property.
+ * Gets the #GDataTasksTask:due property. If the property is unset, <code class="literal">-1</code> will be returned.
+ *
+ * Return value: the due property, or <code class="literal">-1</code>
+ **/
+gint64
+gdata_tasks_task_get_due (GDataTasksTask *self)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), -1);
+	return self->priv->due;
+}
+
+/**
+ * gdata_tasks_task_set_due:
+ * @self: a #GDataTasksTask
+ * @due: due time of the task, or <code class="literal">-1</code>
+ *
+ * Sets the #GDataTasksTask:due property of the #GDataTasksTask to the new due time of the task, @due.
+ *
+ * Set @due to <code class="literal">-1</code> to unset the property in the due time of the task
+ */
+void
+gdata_tasks_task_set_due (GDataTasksTask *self, gint64 due)
+{
+	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
+	g_return_if_fail (due >= -1);
+
+	self->priv->due = due;
+	g_object_notify (G_OBJECT (self), "due");
+}
+
+/**
+ * gdata_tasks_task_get_completed:
+ * @self: a #GDataTasksTask
+ *
+ * Gets the #GDataTasksTask:completed property. If the property is unset, <code class="literal">-1</code> will be returned.
+ *
+ * Return value: the completed property, or <code class="literal">-1</code>
+ **/
+gint64
+gdata_tasks_task_get_completed (GDataTasksTask *self)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), -1);
+	return self->priv->completed;
+}
+
+/**
+ * gdata_tasks_task_set_completed:
+ * @self: a #GDataTasksTask
+ * @due: completion time of the task, or <code class="literal">-1</code>
+ *
+ * Sets the #GDataTasksTask:completed property of the #GDataTasksTask to the new completion time of the task, @due.
+ *
+ * Set @completed to <code class="literal">-1</code> to unset the property in the completion time of the task
+ */
+void
+gdata_tasks_task_set_completed (GDataTasksTask *self, gint64 completed)
+{
+	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
+	g_return_if_fail (completed >= -1);
+
+	self->priv->completed = completed;
+	g_object_notify (G_OBJECT (self), "completed");
+}
+
+/**
+ * gdata_tasks_task_get_deleted:
+ * @self: a #GDataTasksTask
+ *
+ * Gets the #GDataTasksTask:deleted property.
  *
  * Return value: %TRUE if event is deleted, %FALSE otherwise
  **/
 gboolean
-gdata_tasks_task_get_deleted (GDataCalendarEvent *self)
+gdata_tasks_task_get_deleted (GDataTasksTask *self)
 {
-	g_return_val_if_fail (GDATA_IS_CALENDAR_EVENT (self), FALSE);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), FALSE);
 	return self->priv->deleted;
 }
 
 /**
  * gdata_tasks_task_set_deleted:
- * @self: a #GDataCalendarEvent
+ * @self: a #GDataTasksTask
  * @deleted: %TRUE if task is deleted, %FALSE otherwise
  *
- * Sets the #GDataCalendarEvent:deleted property to @deleted.
+ * Sets the #GDataTasksTask:deleted property to @deleted.
  **/
 void
-gdata_tasks_task_set_deleted (GDataCalendarEvent *self, gboolean deleted)
+gdata_tasks_task_set_deleted (GDataTasksTask *self, gboolean deleted)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_EVENT (self));
+	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
 	self->priv->deleted = deleted;
 	g_object_notify (G_OBJECT (self), "deleted");
 }
 
 /**
  * gdata_tasks_task_get_hidden:
- * @self: a #GDataCalendarEvent
+ * @self: a #GDataTasksTask
  *
- * Gets the #GDataCalendarEvent:hidden property.
+ * Gets the #GDataTasksTask:hidden property.
  *
  * Return value: %TRUE if event is hidden, %FALSE otherwise
  **/
 gboolean
-gdata_tasks_task_get_hidden (GDataCalendarEvent *self)
+gdata_tasks_task_get_hidden (GDataTasksTask *self)
 {
-	g_return_val_if_fail (GDATA_IS_CALENDAR_EVENT (self), FALSE);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), FALSE);
 	return self->priv->hidden;
 }
 
 /**
  * gdata_tasks_task_set_hidden:
- * @self: a #GDataCalendarEvent
+ * @self: a #GDataTasksTask
  * @hidden: %TRUE if task is hidden, %FALSE otherwise
  *
- * Sets the #GDataCalendarEvent:hidden property to @hidden.
+ * Sets the #GDataTasksTask:hidden property to @hidden.
  **/
 void
-gdata_tasks_task_set_hidden (GDataCalendarEvent *self, gboolean hidden)
+gdata_tasks_task_set_hidden (GDataTasksTask *self, gboolean hidden)
 {
-	g_return_if_fail (GDATA_IS_CALENDAR_EVENT (self));
+	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
 	self->priv->hidden = hidden;
 	g_object_notify (G_OBJECT (self), "hidden");
 }

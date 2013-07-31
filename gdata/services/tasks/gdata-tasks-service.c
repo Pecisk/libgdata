@@ -197,7 +197,7 @@ gdata_tasks_service_query_all_tasklists_async (GDataTasksService *self, GDataQue
 	}
 
 	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
-	gdata_service_query_async (GDATA_SERVICE (self), get_calendar_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASKLIST,
+	gdata_service_query_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASKLIST,
 	                           cancellable, progress_callback, progress_user_data, destroy_progress_user_data, callback, user_data);
 	g_free (request_uri);
 }
@@ -232,7 +232,7 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 
 	/* Ensure we're authenticated first */
 	if (gdata_authorizer_is_authorized_for_domain (gdata_service_get_authorizer (GDATA_SERVICE (self)),
-	                                               get_calendar_authorization_domain ()) == FALSE) {
+	                                               get_tasks_authorization_domain ()) == FALSE) {
 		g_set_error_literal (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_AUTHENTICATION_REQUIRED,
 		                     _("You must be authenticated to query your own tasklists."));
 		return NULL;
@@ -248,7 +248,7 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 	}
 
 	/* Execute the query */
-	return gdata_service_query (GDATA_SERVICE (self), get_calendar_authorization_domain (), uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
+	return gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
 	                            progress_callback, progress_user_data, error);
 }
 

@@ -94,7 +94,7 @@ typedef struct {
 
 	gboolean (*parse_json) (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
 	gboolean (*post_parse_json) (GDataParsable *parsable, gpointer user_data, GError **error);
-	gboolean (*get_json) (GDataParsable *parsable GString *json_string);
+	void (*get_json) (GDataParsable *parsable, GString *json_string);
 	
 	const gchar *element_name;
 	const gchar *element_namespace;

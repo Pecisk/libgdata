@@ -265,7 +265,7 @@ gdata_parser_int64_from_iso8601 (const gchar *date, gint64 *_time)
 gboolean
 gdata_parser_error_required_json_content_missing (JsonReader *reader, GError **error)
 {
-	gchar *element_string = json_reader_get_member_name (reader);
+	gchar *element_string = (gchar*) json_reader_get_member_name (reader);
 
 	/* Translators: the parameter is the name of an JSON element.
 	 *
@@ -280,7 +280,7 @@ gdata_parser_error_required_json_content_missing (JsonReader *reader, GError **e
 gboolean
 gdata_parser_error_duplicate_json_element (JsonReader *reader, GError **error)
 {
-	gchar *element_string = json_reader_get_member_name (reader);
+	gchar *element_string = (gchar*) json_reader_get_member_name (reader);
 
 	/* Translators: the parameter is the name of an JSON element.
 	 *
@@ -295,7 +295,7 @@ gdata_parser_error_duplicate_json_element (JsonReader *reader, GError **error)
 gboolean
 gdata_parser_error_not_iso8601_format_json (JsonReader *reader, const gchar *actual_value, GError **error)
 {
-	gchar *element_string = json_reader_get_member_name (reader);
+	gchar *element_string = (gchar*) json_reader_get_member_name (reader);
 	g_set_error (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_PROTOCOL_ERROR,
 	             /* Translators: the first parameter is the name of an JSON element,
 	              * and the second parameter is the erroneous value (which was not in ISO 8601 format).
@@ -725,7 +725,7 @@ gdata_parser_object_from_element (xmlNode *element, const gchar *element_name, G
 /*
  * gdata_parser_string_from_json_member:
  * @reader: #JsonReader cursor object to read JSON node from
- * @element_name: the name of the element to parse
+ * @member_name: the name of the member to parse
  * @options: a bitwise combination of parsing options from #GDataParserOptions, or %P_NONE
  * @output: the return location for the parsed string content
  * @success: the return location for a value which is %TRUE if the string was parsed successfully, %FALSE if an error was encountered,
@@ -751,13 +751,13 @@ gdata_parser_object_from_element (xmlNode *element, const gchar *element_name, G
  * Since: 0.7.0
  */
 gboolean
-gdata_parser_string_from_json_member (JsonReader *reader, const gchar *element_name, GDataParserOptions options,
+gdata_parser_string_from_json_member (JsonReader *reader, const gchar *member_name, GDataParserOptions options,
                                   gchar **output, gboolean *success, GError **error)
 {
 	gchar *text;
 
 	/* Check if there's such element */
-	if (strcmp (json_reader_get_member_name (reader), element_name, strlen(element_name)) != 0) {
+	if (strcmp (json_reader_get_member_name (reader), member_name) != 0) {
 		return FALSE;
 	}
 
@@ -768,7 +768,7 @@ gdata_parser_string_from_json_member (JsonReader *reader, const gchar *element_n
 	}
 
 	/* Get the string and check it for NULLness or emptiness */
-	text = json_reader_get_string_value (reader);
+	text = (gchar*) json_reader_get_string_value (reader);
 	if ((options & P_REQUIRED && text == NULL) || (options & P_NON_EMPTY && text != NULL && *text == '\0')) {
 		g_free (text);
 		*success = gdata_parser_error_required_json_content_missing (reader, error);
@@ -815,14 +815,14 @@ gdata_parser_string_from_json_member (JsonReader *reader, const gchar *element_n
  * Since: 0.7.0
  */
 gboolean
-gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *element_name, GDataParserOptions options,
+gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *member_name, GDataParserOptions options,
                                       gint64 *output, gboolean *success, GError **error)
 {
 	gchar *text;
 	GTimeVal time_val;
 
 	/* Check if there's such element */
-	if (strcmp (json_reader_get_member_name (reader), element_name, strlen(element_name)) != 0) {
+	if (strcmp (json_reader_get_member_name (reader), member_name) != 0) {
 		return FALSE;
 	}
 
@@ -833,7 +833,7 @@ gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *eleme
 	}
 
 	/* Get the string and check it for NULLness */
-	text = json_reader_get_string_value (reader);
+	text = (gchar*) json_reader_get_string_value (reader);
 	if (options & P_REQUIRED && (text == NULL || *text == '\0')) {
 		g_free (text);
 		*success = gdata_parser_error_required_json_content_missing (reader, error);
@@ -842,7 +842,7 @@ gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *eleme
 
 	/* Attempt to parse the string as a GTimeVal */
 	if (g_time_val_from_iso8601 ((gchar*) text, &time_val) == FALSE) {
-		*success = gdata_parser_error_not_iso8601_format_json (element, text, error);
+		*success = gdata_parser_error_not_iso8601_format_json (reader, text, error);
 		g_free (text);
 		return TRUE;
 	}
@@ -858,32 +858,18 @@ gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *eleme
 
 /* FIXME API description */
 gboolean
-gdata_parser_boolean_from_json_member (JsonReader *reader, const gchar *member_name, gboolean *output, GDataParserOptions options, gboolean *success, GError **error)
+gdata_parser_boolean_from_json_member (JsonReader *reader, const gchar *member_name, GDataParserOptions options, gboolean *output, gboolean *success, GError **error)
 {
-	gchar *text;
 	
 	/* Check if there's such element */
-	if (strcmp (json_reader_get_member_name (reader), element_name, strlen(element_name)) != 0) {
+	if (strcmp (json_reader_get_member_name (reader), member_name) != 0) {
 		return FALSE;
 	}
 	
-	/* Get the string and check it for NULLness */
-	text = json_reader_get_string_value (reader);
-	if (options & P_REQUIRED && (text == NULL || *text == '\0')) {
-		g_free (text);
-		*success = gdata_parser_error_required_json_content_missing (reader, error);
-		return TRUE;
-	}
-	if (strcmp (text, "True", 4) == 0) {
-		*output = TRUE;
-	} else if (strcmp (text, "False", 5) == 0) {
-		*output = FALSE;
-	} else {
-		/* FIXME issue warning */
-		return FALSE;
-	}
-	
-	g_free(text);
+	/* Get the boolean */
+	/* FIXME check json reader error if it fails to read it*/
+	*output = json_reader_get_boolean_value (reader);
+
 	return TRUE;
 }
 

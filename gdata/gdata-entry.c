@@ -56,8 +56,9 @@ static void pre_get_xml (GDataParsable *parsable, GString *xml_string);
 static void get_xml (GDataParsable *parsable, GString *xml_string);
 static void get_namespaces (GDataParsable *parsable, GHashTable *namespaces);
 static gchar *get_entry_uri (const gchar *id) G_GNUC_WARN_UNUSED_RESULT;
-static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError *error);
-static gboolean post_parse_json (GDataParasable *parsable, JsonReader *reader, gpointer user_data, GError *error);
+static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
+static gboolean post_parse_json (GDataParsable *parsable, gpointer user_data, GError **error);
+static void get_json (GDataParsable *parsable, GString *json_string);
 
 struct _GDataEntryPrivate {
 	gchar *title;
@@ -117,6 +118,7 @@ gdata_entry_class_init (GDataEntryClass *klass)
 
 	parsable_class->parse_json = parse_json;
 	parsable_class->post_parse_json = post_parse_json;
+	parsable_class->get_json = get_json;
 	
 	klass->get_entry_uri = get_entry_uri;
 
@@ -601,13 +603,13 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 	    gdata_parser_string_from_json_member (reader, "id", P_DEFAULT, &(priv->id), &success, error) == TRUE ||
 	    gdata_parser_int64_time_from_json_member (reader, "updated", P_REQUIRED | P_NO_DUPES, &(priv->updated), &success, error) == TRUE) {
 			return success;
-		} else if (strcmp (json_reader_get_member_name (reader), "selfLink", 8) == 0) {
-			priv->content = json_reader_get_string_value (reader);
+		} else if (strcmp (json_reader_get_member_name (reader), "selfLink") == 0) {
+			priv->content = (gchar*) json_reader_get_string_value (reader);
 			priv->content_is_uri = TRUE;
 			return TRUE;
 		}
 
-	return GDATA_PARSABLE_CLASS (gdata_entry_parent_class)->parse_json (parsable, doc, node, user_data, error);
+	return GDATA_PARSABLE_CLASS (gdata_entry_parent_class)->parse_json (parsable, reader, user_data, error);
 }
 
 static gboolean
@@ -635,7 +637,7 @@ get_json (GDataParsable *parsable, GString *json_string)
 
 	if (priv->updated != -1) {
 		gchar *updated = gdata_parser_int64_to_iso8601 (priv->updated);
-		g_string_append_printf (xml_string, "\"updated\": \"%s\",", updated);
+		g_string_append_printf (json_string, "\"updated\": \"%s\",", updated);
 		g_free (updated);
 	}
 }

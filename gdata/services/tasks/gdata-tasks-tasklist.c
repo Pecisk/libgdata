@@ -56,13 +56,13 @@ struct _GDataTasksTasklistPrivate {
 G_DEFINE_TYPE (GDataTasksTasklist, gdata_tasks_tasklist, GDATA_TYPE_ENTRY)
 
 static void
-gdata_tasks_tasklist_class_init (GDataCalendarCalendarClass *klass)
+gdata_tasks_tasklist_class_init (GDataTasksTasklistClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	GDataParsableClass *parsable_class = GDATA_PARSABLE_CLASS (klass);
 	GDataEntryClass *entry_class = GDATA_ENTRY_CLASS (klass);
 
-	g_type_class_add_private (klass, sizeof (GDataCalendarCalendarPrivate));
+	g_type_class_add_private (klass, sizeof (GDataTasksTasklistPrivate));
 
 	gobject_class->constructor = gdata_tasks_tasklist_constructor;
 	gobject_class->finalize = gdata_tasks_tasklist_finalize;
@@ -103,14 +103,14 @@ static gboolean
 parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
 {
 	/* well, there's nothing specific to parse from tasklist entries, all goes upstream */
-	return GDATA_PARSABLE_CLASS (gdata_calendar_calendar_parent_class)->parse_json (parsable, reader, user_data, error);
+	return GDATA_PARSABLE_CLASS (gdata_tasks_tasklist_parent_class)->parse_json (parsable, reader, user_data, error);
 }
 
 static void
 get_json (GDataParsable *parsable, GString *json_string)
 {
 	/* Chain up to the parent class */
-	GDATA_PARSABLE_CLASS (gdata_calendar_calendar_parent_class)->get_json (parsable, json_string);
+	GDATA_PARSABLE_CLASS (gdata_tasks_tasklist_parent_class)->get_json (parsable, json_string);
 }
 
 

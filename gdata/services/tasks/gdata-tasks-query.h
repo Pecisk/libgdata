@@ -59,22 +59,22 @@ typedef struct {
 
 GType gdata_tasks_query_get_type (void) G_GNUC_CONST;
 
-GDataTasksQuery *gdata_calendar_query_new (const gchar *q) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
+GDataTasksQuery *gdata_tasks_query_new (const gchar *q) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
 
-gint64 gdata_tasks_query_get_completed_max (GDataCalendarQuery *self);
-void gdata_tasks_query_set_completed_max (GDataCalendarQuery *self, gint64 completed_max);
-gint64 gdata_tasks_query_get_completed_min (GDataCalendarQuery *self);
-void gdata_tasks_query_set_completed_min (GDataCalendarQuery *self, gint64 completed_min);
-gint64 gdata_tasks_query_get_due_max (GDataCalendarQuery *self);
-void gdata_tasks_query_set_due_max (GDataCalendarQuery *self, gint64 due_max);
-gint64 gdata_tasks_query_get_due_min (GDataCalendarQuery *self);
-void gdata_tasks_query_set_due_min (GDataCalendarQuery *self, gint64 due_min);
-gboolean gdata_tasks_query_get_show_completed (GDataCalendarQuery *self) G_GNUC_PURE;
-void gdata_tasks_query_set_show_completed (GDataCalendarQuery *self, gboolean show_completed);
-gboolean gdata_tasks_query_get_show_deleted (GDataCalendarQuery *self) G_GNUC_PURE;
-void gdata_tasks_query_set_show_deleted (GDataCalendarQuery *self, gboolean show_deleted);
-gboolean gdata_tasks_query_get_show_hidden (GDataCalendarQuery *self) G_GNUC_PURE;
-void gdata_tasks_query_set_show_hidden (GDataCalendarQuery *self, gboolean show_hidden);
+gint64 gdata_tasks_query_get_completed_max (GDataTasksQuery *self);
+void gdata_tasks_query_set_completed_max (GDataTasksQuery *self, gint64 completed_max);
+gint64 gdata_tasks_query_get_completed_min (GDataTasksQuery *self);
+void gdata_tasks_query_set_completed_min (GDataTasksQuery *self, gint64 completed_min);
+gint64 gdata_tasks_query_get_due_max (GDataTasksQuery *self);
+void gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max);
+gint64 gdata_tasks_query_get_due_min (GDataTasksQuery *self);
+void gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min);
+gboolean gdata_tasks_query_get_show_completed (GDataTasksQuery *self) G_GNUC_PURE;
+void gdata_tasks_query_set_show_completed (GDataTasksQuery *self, gboolean show_completed);
+gboolean gdata_tasks_query_get_show_deleted (GDataTasksQuery *self) G_GNUC_PURE;
+void gdata_tasks_query_set_show_deleted (GDataTasksQuery *self, gboolean show_deleted);
+gboolean gdata_tasks_query_get_show_hidden (GDataTasksQuery *self) G_GNUC_PURE;
+void gdata_tasks_query_set_show_hidden (GDataTasksQuery *self, gboolean show_hidden);
 
 G_END_DECLS
 
