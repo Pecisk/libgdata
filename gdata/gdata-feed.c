@@ -594,13 +594,13 @@ get_namespaces (GDataParsable *parsable, GHashTable *namespaces)
 static gboolean
 parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
 {
-	int i;
+	guint i;
 	GDataFeed *self = GDATA_FEED (parsable);
 	ParseData *data = user_data;
 	
 	if (strcmp (json_reader_get_member_name (reader), "items")) {
 		// loop trough elements array
-		for (i=0;i<json_reader_count_elements (reader);i++) {
+		for (i = 0; i < json_reader_count_elements (reader); i++) {
 			json_reader_read_element (reader, i);
 			
 			GDataEntry *entry;

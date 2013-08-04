@@ -80,7 +80,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 *
 	 * Upper bound for a task's completion date (as a RFC 3339 timestamp) to filter by. Optional.
 	 * The default is not to filter by completion date. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_COMPLETED_MAX,
 	                                 g_param_spec_int64 ("completed-max",
 	                                                       "Max task completion date", "Upper bound for a task's completion date to filter by.",
@@ -92,7 +92,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 *
 	 * Lower bound for a task's completion date (as a RFC 3339 timestamp) to filter by. Optional.
 	 * The default is not to filter by completion date. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_COMPLETED_MIN,
 	                                 g_param_spec_int64 ("completed-min",
 	                                                       "Min task completion date", "Lower bound for a task's completion date to filter by.",
@@ -104,7 +104,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 *
 	 * Upper bound for a task's due date (as a RFC 3339 timestamp) to filter by. Optional.
 	 * The default is not to filter by completion date. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_DUE_MAX,
 	                                 g_param_spec_int64 ("due-max",
 	                                                       "Max task completion date", "Upper bound for a task's completion date to filter by.",
@@ -116,7 +116,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 *
 	 * Lower bound for a task's due date (as a RFC 3339 timestamp) to filter by. Optional.
 	 * The default is not to filter by completion date. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_DUE_MIN,
 	                                 g_param_spec_int64 ("due-min",
 	                                                       "Min task completion date", "Lower bound for a task's completion date to filter by.",
@@ -127,7 +127,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 * GDataTasksQuery:show-completed:
 	 *
 	 * Flag indicating whether completed tasks are returned in the result. Optional. The default is True. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_SHOW_COMPLETED,
 	                                 g_param_spec_boolean ("show-completed",
 	                                                       "Show completed tasks?", "Indicated whatever completed tasks are returned in the result.",
@@ -138,7 +138,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 * GDataTasksQuery:show-deleted:
 	 *
 	 * Flag indicating whether deleted tasks are returned in the result. Optional. The default is False. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_SHOW_DELETED,
 	                                 g_param_spec_boolean ("show-deleted",
 	                                                       "Show deleted tasks?", "Indicated whatever deleted tasks are returned in the result.",
@@ -148,7 +148,7 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	 * GDataTasksQuery:show-hidden:
 	 *
 	 * Flag indicating whether hidden tasks are returned in the result. Optional. The default is False. 
-	 **/
+	 */
 	g_object_class_install_property (gobject_class, PROP_SHOW_HIDDEN,
 	                                 g_param_spec_boolean ("show-hidden",
 	                                                       "Show hidden tasks?", "Indicated whatever hidden tasks are returned in the result.",
@@ -336,7 +336,7 @@ get_query_uri (GDataQuery *self, const gchar *feed_uri, GString *query_uri, gboo
  * Creates a new #GDataTasksQuery with its #GDataQuery:q property set to @q.
  *
  * Return value: a new #GDataTasksQuery
- **/
+ */
 GDataTasksQuery *
 gdata_tasks_query_new (const gchar *q)
 {
@@ -350,7 +350,7 @@ gdata_tasks_query_new (const gchar *q)
  * Gets the #GDataTasksQuery:completed-max property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the completed-max property, or <code class="literal">-1</code>
- **/
+ */
 gint64
 gdata_tasks_query_get_completed_max (GDataTasksQuery *self)
 {
@@ -367,7 +367,7 @@ gdata_tasks_query_get_completed_max (GDataTasksQuery *self)
  * to the new time/date, @completed_max.
  *
  * Set @completed_max to <code class="literal">-1</code> to unset the property in the query URI.
- **/
+ */
 void
 gdata_tasks_query_set_completed_max (GDataTasksQuery *self, gint64 completed_max)
 {
@@ -385,7 +385,7 @@ gdata_tasks_query_set_completed_max (GDataTasksQuery *self, gint64 completed_max
  * Gets the #GDataTasksQuery:completed-min property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the completed-min property, or <code class="literal">-1</code>
- **/
+ */
 gint64
 gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
 {
@@ -402,7 +402,7 @@ gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
  * to the new time/date, @completed_min.
  * 
  * Set @completed_max to <code class="literal">-1</code> to unset the property in the query URI.
- **/
+ */
 void
 gdata_tasks_query_set_completed_min (GDataTasksQuery *self, gint64 completed_min)
 {
@@ -420,7 +420,7 @@ gdata_tasks_query_set_completed_min (GDataTasksQuery *self, gint64 completed_min
  * Gets the #GDataTasksQuery:due-max property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the due-max property, or <code class="literal">-1</code>
- **/
+ */
 gint64
 gdata_tasks_query_get_due_max (GDataTasksQuery *self)
 {
@@ -437,7 +437,7 @@ gdata_tasks_query_get_due_max (GDataTasksQuery *self)
  * to the new time/date, @due_max.
  *
  * Set @due_max to <code class="literal">-1</code> to unset the property in the query URI.
- **/
+ */
 void
 gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max)
 {
@@ -456,7 +456,7 @@ gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max)
  * Gets the #GDataTasksQuery:due-min property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the due-min property, or <code class="literal">-1</code>
- **/
+ */
 gint64
 gdata_tasks_query_get_due_min (GDataTasksQuery *self)
 {
@@ -473,7 +473,7 @@ gdata_tasks_query_get_due_min (GDataTasksQuery *self)
  * to the new time/date, @due_min.
  * 
  * Set @due_max to <code class="literal">-1</code> to unset the property in the query URI.
- **/
+ */
 void
 gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min)
 {
@@ -491,7 +491,7 @@ gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min)
  * Gets the #GDataTasksQuery:show-completed property.
  *
  * Return value: the show-completed property
- **/
+ */
 gboolean
 gdata_tasks_query_get_show_completed (GDataTasksQuery *self)
 {
@@ -524,7 +524,7 @@ gdata_tasks_query_set_show_completed (GDataTasksQuery *self, gboolean show_compl
  * Gets the #GDataTasksQuery:show-deleted property.
  *
  * Return value: the show-deleted property
- **/
+ */
 gboolean
 gdata_tasks_query_get_show_deleted (GDataTasksQuery *self)
 {
@@ -557,7 +557,7 @@ gdata_tasks_query_set_show_deleted (GDataTasksQuery *self, gboolean show_deleted
  * Gets the #GDataTasksQuery:show-hidden property.
  *
  * Return value: the show-hidden property
- **/
+ */
 gboolean
 gdata_tasks_query_get_show_hidden (GDataTasksQuery *self)
 {

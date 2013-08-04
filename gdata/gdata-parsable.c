@@ -372,7 +372,7 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonReader *reader, gpo
 {
 	GDataParsable *parsable;
 	GDataParsableClass *klass;
-	int i;
+	guint i;
 	
 	g_return_val_if_fail (g_type_is_a (parsable_type, GDATA_TYPE_PARSABLE), NULL);
 	g_return_val_if_fail (reader != NULL, NULL);
@@ -391,7 +391,7 @@ _gdata_parsable_new_from_json_node (GType parsable_type, JsonReader *reader, gpo
 	g_assert (klass->element_name != NULL);
 
 	/* Parse each child element */
-	for (i=0;i<json_reader_count_members (reader);i++) {
+	for (i = 0; i < json_reader_count_members (reader); i++) {
 		g_return_val_if_fail (json_reader_read_element (reader, i), NULL);
 		if (klass->parse_json (parsable, reader, user_data, error) == FALSE) {
 			g_object_unref (reader);
