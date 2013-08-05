@@ -124,33 +124,33 @@ gdata_tasks_query_class_init (GDataTasksQueryClass *klass)
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	 * GDataTasksQuery:show-completed:
+	 * GDataTasksQuery:is-show-completed:
 	 *
 	 * Flag indicating whether completed tasks are returned in the result. Optional. The default is True. 
 	 */
 	g_object_class_install_property (gobject_class, PROP_SHOW_COMPLETED,
-	                                 g_param_spec_boolean ("show-completed",
+	                                 g_param_spec_boolean ("is-show-completed",
 	                                                       "Show completed tasks?", "Indicated whatever completed tasks are returned in the result.",
 	                                                       FALSE,
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	 * GDataTasksQuery:show-deleted:
+	 * GDataTasksQuery:is-show-deleted:
 	 *
 	 * Flag indicating whether deleted tasks are returned in the result. Optional. The default is False. 
 	 */
 	g_object_class_install_property (gobject_class, PROP_SHOW_DELETED,
-	                                 g_param_spec_boolean ("show-deleted",
+	                                 g_param_spec_boolean ("is-show-deleted",
 	                                                       "Show deleted tasks?", "Indicated whatever deleted tasks are returned in the result.",
 	                                                       FALSE,
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 	/**
-	 * GDataTasksQuery:show-hidden:
+	 * GDataTasksQuery:is-show-hidden:
 	 *
 	 * Flag indicating whether hidden tasks are returned in the result. Optional. The default is False. 
 	 */
 	g_object_class_install_property (gobject_class, PROP_SHOW_HIDDEN,
-	                                 g_param_spec_boolean ("show-hidden",
+	                                 g_param_spec_boolean ("is-show-hidden",
 	                                                       "Show hidden tasks?", "Indicated whatever hidden tasks are returned in the result.",
 	                                                       FALSE,
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
@@ -226,13 +226,13 @@ gdata_tasks_query_set_property (GObject *object, guint property_id, const GValue
 			gdata_tasks_query_set_due_min (self, g_value_get_int64 (value));
 			break;
 		case PROP_SHOW_COMPLETED:
-			gdata_tasks_query_set_show_completed (self, g_value_get_boolean (value));
+			gdata_tasks_query_set_is_show_completed (self, g_value_get_boolean (value));
 			break;
 		case PROP_SHOW_DELETED:
-			gdata_tasks_query_set_show_deleted (self, g_value_get_boolean (value));
+			gdata_tasks_query_set_is_show_deleted (self, g_value_get_boolean (value));
 			break;
 		case PROP_SHOW_HIDDEN:
-			gdata_tasks_query_set_show_hidden (self, g_value_get_boolean (value));
+			gdata_tasks_query_set_is_show_hidden (self, g_value_get_boolean (value));
 			break;
 		default:
 			/* We don't have any other property... */
@@ -336,6 +336,8 @@ get_query_uri (GDataQuery *self, const gchar *feed_uri, GString *query_uri, gboo
  * Creates a new #GDataTasksQuery with its #GDataQuery:q property set to @q.
  *
  * Return value: a new #GDataTasksQuery
+ * 
+ * Since: 0.13.4
  */
 GDataTasksQuery *
 gdata_tasks_query_new (const gchar *q)
@@ -350,6 +352,8 @@ gdata_tasks_query_new (const gchar *q)
  * Gets the #GDataTasksQuery:completed-max property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the completed-max property, or <code class="literal">-1</code>
+ * 
+ * Since: 0.13.4
  */
 gint64
 gdata_tasks_query_get_completed_max (GDataTasksQuery *self)
@@ -367,6 +371,8 @@ gdata_tasks_query_get_completed_max (GDataTasksQuery *self)
  * to the new time/date, @completed_max.
  *
  * Set @completed_max to <code class="literal">-1</code> to unset the property in the query URI.
+ * 
+ * Since: 0.13.4
  */
 void
 gdata_tasks_query_set_completed_max (GDataTasksQuery *self, gint64 completed_max)
@@ -385,6 +391,8 @@ gdata_tasks_query_set_completed_max (GDataTasksQuery *self, gint64 completed_max
  * Gets the #GDataTasksQuery:completed-min property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the completed-min property, or <code class="literal">-1</code>
+ * 
+ * Since: 0.13.4
  */
 gint64
 gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
@@ -402,6 +410,8 @@ gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
  * to the new time/date, @completed_min.
  * 
  * Set @completed_max to <code class="literal">-1</code> to unset the property in the query URI.
+ * 
+ * Since: 0.13.4
  */
 void
 gdata_tasks_query_set_completed_min (GDataTasksQuery *self, gint64 completed_min)
@@ -420,6 +430,8 @@ gdata_tasks_query_set_completed_min (GDataTasksQuery *self, gint64 completed_min
  * Gets the #GDataTasksQuery:due-max property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the due-max property, or <code class="literal">-1</code>
+ * 
+ * Since: 0.13.4
  */
 gint64
 gdata_tasks_query_get_due_max (GDataTasksQuery *self)
@@ -437,6 +449,8 @@ gdata_tasks_query_get_due_max (GDataTasksQuery *self)
  * to the new time/date, @due_max.
  *
  * Set @due_max to <code class="literal">-1</code> to unset the property in the query URI.
+ * 
+ * Since: 0.13.4
  */
 void
 gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max)
@@ -456,6 +470,8 @@ gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max)
  * Gets the #GDataTasksQuery:due-min property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the UNIX timestamp for the due-min property, or <code class="literal">-1</code>
+ * 
+ * Since: 0.13.4
  */
 gint64
 gdata_tasks_query_get_due_min (GDataTasksQuery *self)
@@ -473,6 +489,8 @@ gdata_tasks_query_get_due_min (GDataTasksQuery *self)
  * to the new time/date, @due_min.
  * 
  * Set @due_max to <code class="literal">-1</code> to unset the property in the query URI.
+ * 
+ * Since: 0.13.4
  */
 void
 gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min)
@@ -485,31 +503,33 @@ gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min)
 }
 
 /**
- * gdata_tasks_query_get_show_completed:
+ * gdata_tasks_query_is_show_completed:
  * @self: a #GDataTasksQuery
  *
- * Gets the #GDataTasksQuery:show-completed property.
+ * Gets the #GDataTasksQuery:is-show-completed property.
  *
- * Return value: the show-completed property
+ * Return value: the is-show-completed property
+ * 
+ * Since: 0.13.4
  */
 gboolean
-gdata_tasks_query_get_show_completed (GDataTasksQuery *self)
+gdata_tasks_query_is_show_completed (GDataTasksQuery *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_QUERY (self), FALSE);
 	return self->priv->show_completed;
 }
 
 /**
- * gdata_tasks_query_set_show_completed:
+ * gdata_tasks_query_set_is_show_completed:
  * @self: a #GDataTasksQuery
  * @show_completed: %TRUE to show completed tasks, %FALSE otherwise
  *
- * Sets the #GDataTasksQuery:show-completed property of the #GDataTasksQuery.
+ * Sets the #GDataTasksQuery:is-show-completed property of the #GDataTasksQuery.
  *
- * Since: 0.9.1
+ * Since: 0.13.4
  */
 void
-gdata_tasks_query_set_show_completed (GDataTasksQuery *self, gboolean show_completed)
+gdata_tasks_query_set_is_show_completed (GDataTasksQuery *self, gboolean show_completed)
 {
 	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 
@@ -518,31 +538,33 @@ gdata_tasks_query_set_show_completed (GDataTasksQuery *self, gboolean show_compl
 }
 
 /**
- * gdata_tasks_query_get_show_deleted:
+ * gdata_tasks_query_is_show_deleted:
  * @self: a #GDataTasksQuery
  *
- * Gets the #GDataTasksQuery:show-deleted property.
+ * Gets the #GDataTasksQuery:is-show-deleted property.
  *
- * Return value: the show-deleted property
+ * Return value: the is-show-deleted property
+ * 
+ * Since: 0.13.4
  */
 gboolean
-gdata_tasks_query_get_show_deleted (GDataTasksQuery *self)
+gdata_tasks_query_is_show_deleted (GDataTasksQuery *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_QUERY (self), FALSE);
 	return self->priv->show_deleted;
 }
 
 /**
- * gdata_tasks_query_set_show_deleted:
+ * gdata_tasks_query_set_is_show_deleted:
  * @self: a #GDataTasksQuery
  * @show_deleted: %TRUE to show deleted tasks, %FALSE otherwise
  *
- * Sets the #GDataTasksQuery:show-deleted property of the #GDataTasksQuery.
+ * Sets the #GDataTasksQuery:is-show-deleted property of the #GDataTasksQuery.
  *
- * Since: 0.9.1
+ * Since: 0.13.4
  */
 void
-gdata_tasks_query_set_show_deleted (GDataTasksQuery *self, gboolean show_deleted)
+gdata_tasks_query_set_is_show_deleted (GDataTasksQuery *self, gboolean show_deleted)
 {
 	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 
@@ -551,31 +573,33 @@ gdata_tasks_query_set_show_deleted (GDataTasksQuery *self, gboolean show_deleted
 }
 
 /**
- * gdata_tasks_query_get_show_hidden:
+ * gdata_tasks_query_is_show_hidden:
  * @self: a #GDataTasksQuery
  *
- * Gets the #GDataTasksQuery:show-hidden property.
+ * Gets the #GDataTasksQuery:is-show-hidden property.
  *
- * Return value: the show-hidden property
+ * Return value: the is-show-hidden property
+ * 
+ * Since: 0.13.4
  */
 gboolean
-gdata_tasks_query_get_show_hidden (GDataTasksQuery *self)
+gdata_tasks_query_is_show_hidden (GDataTasksQuery *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_QUERY (self), FALSE);
 	return self->priv->show_hidden;
 }
 
 /**
- * gdata_tasks_query_set_show_hidden:
+ * gdata_tasks_query_set_is_show_hidden:
  * @self: a #GDataTasksQuery
  * @show_hidden: %TRUE to show hidden tasks, %FALSE otherwise
  *
- * Sets the #GDataTasksQuery:show-hidden property of the #GDataTasksQuery.
+ * Sets the #GDataTasksQuery:is-show-hidden property of the #GDataTasksQuery.
  *
- * Since: 0.9.1
+ * Since: 0.13.4
  */
 void
-gdata_tasks_query_set_show_hidden (GDataTasksQuery *self, gboolean show_hidden)
+gdata_tasks_query_set_is_show_hidden (GDataTasksQuery *self, gboolean show_hidden)
 {
 	g_return_if_fail (GDATA_IS_TASKS_QUERY (self));
 

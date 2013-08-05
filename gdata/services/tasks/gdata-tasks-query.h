@@ -69,12 +69,12 @@ gint64 gdata_tasks_query_get_due_max (GDataTasksQuery *self);
 void gdata_tasks_query_set_due_max (GDataTasksQuery *self, gint64 due_max);
 gint64 gdata_tasks_query_get_due_min (GDataTasksQuery *self);
 void gdata_tasks_query_set_due_min (GDataTasksQuery *self, gint64 due_min);
-gboolean gdata_tasks_query_get_show_completed (GDataTasksQuery *self) G_GNUC_PURE;
-void gdata_tasks_query_set_show_completed (GDataTasksQuery *self, gboolean show_completed);
-gboolean gdata_tasks_query_get_show_deleted (GDataTasksQuery *self) G_GNUC_PURE;
-void gdata_tasks_query_set_show_deleted (GDataTasksQuery *self, gboolean show_deleted);
-gboolean gdata_tasks_query_get_show_hidden (GDataTasksQuery *self) G_GNUC_PURE;
-void gdata_tasks_query_set_show_hidden (GDataTasksQuery *self, gboolean show_hidden);
+gboolean gdata_tasks_query_is_show_completed (GDataTasksQuery *self) G_GNUC_PURE;
+void gdata_tasks_query_set_is_show_completed (GDataTasksQuery *self, gboolean show_completed);
+gboolean gdata_tasks_query_is_show_deleted (GDataTasksQuery *self) G_GNUC_PURE;
+void gdata_tasks_query_set_is_show_deleted (GDataTasksQuery *self, gboolean show_deleted);
+gboolean gdata_tasks_query_is_show_hidden (GDataTasksQuery *self) G_GNUC_PURE;
+void gdata_tasks_query_set_is_show_hidden (GDataTasksQuery *self, gboolean show_hidden);
 
 G_END_DECLS
 

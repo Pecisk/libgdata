@@ -79,7 +79,7 @@ get_authorization_domains (void)
  *
  * Return value: a new #GDataTasksService, or %NULL; unref with g_object_unref()
  *
- * Since: 0.9.0
+ * Since: 0.13.4
  */
 GDataTasksService *
 gdata_tasks_service_new (GDataAuthorizer *authorizer)
@@ -101,6 +101,8 @@ gdata_tasks_service_new (GDataAuthorizer *authorizer)
  * The domain never changes, and is interned so that pointer comparison can be used to differentiate it from other authorization domains.
  *
  * Return value: (transfer none): the service's authorization domain
+ * 
+ * Since: 0.13.4
  */
 GDataAuthorizationDomain *
 gdata_tasks_service_get_primary_authorization_domain (void)
@@ -123,7 +125,9 @@ gdata_tasks_service_get_primary_authorization_domain (void)
  * For more details, see gdata_service_query().
  *
  * Return value: (transfer full): a #GDataFeed of query results; unref with g_object_unref()
- **/
+ * 
+ * Since: 0.13.4
+ */
 GDataFeed *
 gdata_tasks_service_query_all_tasklists (GDataTasksService *self, GDataQuery *query, GCancellable *cancellable,
                                             GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
@@ -170,7 +174,9 @@ gdata_tasks_service_query_all_tasklists (GDataTasksService *self, GDataQuery *qu
  *
  * For more details, see gdata_tasks_service_query_all_tasklists(), which is the synchronous version of
  * this function, and gdata_service_query_async(), which is the base asynchronous query function.
- **/
+ * 
+ * Since: 0.13.4
+ */
 void
 gdata_tasks_service_query_all_tasklists_async (GDataTasksService *self, GDataQuery *query, GCancellable *cancellable,
                                                   GDataQueryProgressCallback progress_callback, gpointer progress_user_data,
@@ -217,7 +223,9 @@ gdata_tasks_service_query_all_tasklists_async (GDataTasksService *self, GDataQue
  * For more details, see gdata_service_query().
  *
  * Return value: (transfer full): a #GDataFeed of query results; unref with g_object_unref()
- **/
+ * 
+ * Since: 0.13.4
+ */
 GDataFeed *
 gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query, GCancellable *cancellable,
                                      GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
@@ -272,7 +280,9 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
  *
  * For more details, see gdata_tasks_service_query_tasks(), which is the synchronous version of this function, and gdata_service_query_async(),
  * which is the base asynchronous query function.
- **/
+ * 
+ * Since: 0.13.4
+ */
 void
 gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query, GCancellable *cancellable,
                                            GDataQueryProgressCallback progress_callback, gpointer progress_user_data,

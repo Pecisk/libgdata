@@ -73,10 +73,10 @@ gint64 gdata_tasks_task_get_due (GDataTasksTask *self);
 void gdata_tasks_task_set_due (GDataTasksTask *self, gint64 due);
 gint64 gdata_tasks_task_get_completed (GDataTasksTask *self);
 void gdata_tasks_task_set_completed (GDataTasksTask *self, gint64 completed);
-gboolean gdata_tasks_task_get_deleted (GDataTasksTask *self) G_GNUC_PURE;
-void gdata_tasks_task_set_deleted (GDataTasksTask *self, gboolean deleted);
-gboolean gdata_tasks_task_get_hidden (GDataTasksTask *self) G_GNUC_PURE;
-void gdata_tasks_task_set_hidden (GDataTasksTask *self, gboolean hidden);
+gboolean gdata_tasks_task_is_deleted (GDataTasksTask *self) G_GNUC_PURE;
+void gdata_tasks_task_set_is_deleted (GDataTasksTask *self, gboolean deleted);
+gboolean gdata_tasks_task_is_hidden (GDataTasksTask *self) G_GNUC_PURE;
+void gdata_tasks_task_set_is_hidden (GDataTasksTask *self, gboolean hidden);
 
 G_END_DECLS
 

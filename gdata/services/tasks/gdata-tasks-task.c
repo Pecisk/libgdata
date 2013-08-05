@@ -168,24 +168,24 @@ gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	 * GDataTasksTask:deleted:
+	 * GDataTasksTask:is-deleted:
 	 *
 	 * Flag indicating whether the task has been deleted. The default if False.
 	 *  
 	 */
 	g_object_class_install_property (gobject_class, PROP_DELETED,
-	                                 g_param_spec_boolean ("deleted",
+	                                 g_param_spec_boolean ("is-deleted",
 	                                                       "Deleted?", "Indicated whatever task is deleted.",
 	                                                       FALSE,
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 	/**
-	 * GDataTasksTask:hidden:
+	 * GDataTasksTask:is-hidden:
 	 *
 	 * Flag indicating whether completed tasks are returned in the result. Optional. The default is True. 
 	 */
 	g_object_class_install_property (gobject_class, PROP_HIDDEN,
-	                                 g_param_spec_boolean ("hidden",
+	                                 g_param_spec_boolean ("is-hidden",
 	                                                       "Hidden?", "Indicated whatever task is hidden.",
 	                                                       FALSE,
 	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
@@ -294,10 +294,10 @@ gdata_tasks_task_set_property (GObject *object, guint property_id, const GValue 
 			gdata_tasks_task_set_completed (self, g_value_get_int64 (value));
 			break;
 		case PROP_DELETED:
-			gdata_tasks_task_set_deleted (self, g_value_get_boolean (value));
+			gdata_tasks_task_set_is_deleted (self, g_value_get_boolean (value));
 			break;
 		case PROP_HIDDEN:
-			gdata_tasks_task_set_hidden (self, g_value_get_boolean (value));
+			gdata_tasks_task_set_is_hidden (self, g_value_get_boolean (value));
 			break;
 		default:
 			/* We don't have any other property... */
@@ -364,6 +364,8 @@ get_json (GDataParsable *parsable, GString *json_string)
  * Creates a new #GDataTasksTask with the given ID and default properties.
  *
  * Return value: a new #GDataTasksTask; unref with g_object_unref()
+ * 
+ * Since: 0.13.4
  */
 GDataTasksTask *
 gdata_tasks_task_new (const gchar *id)
@@ -379,6 +381,7 @@ gdata_tasks_task_new (const gchar *id)
  *
  * Return value: the parent of the task, or %NULL
  *
+ * Since: 0.13.4
  */
 const gchar *
 gdata_tasks_task_get_parent (GDataTasksTask *self)
@@ -396,6 +399,7 @@ gdata_tasks_task_get_parent (GDataTasksTask *self)
  *
  * Set @parent to %NULL to unset the property in the task.
  *
+ * Since: 0.13.4
  */
 void
 gdata_tasks_task_set_parent (GDataTasksTask *self, const gchar *parent)
@@ -415,6 +419,7 @@ gdata_tasks_task_set_parent (GDataTasksTask *self, const gchar *parent)
  *
  * Return value: the position of the task, or %NULL
  *
+ * Since: 0.13.4
  */
 const gchar *
 gdata_tasks_task_get_position (GDataTasksTask *self)
@@ -432,7 +437,7 @@ gdata_tasks_task_get_position (GDataTasksTask *self)
  *
  * Set @position to %NULL to unset the property in the task.
  *
- * Since: 0.2.0
+ * Since: 0.13.4
  */
 void
 gdata_tasks_task_set_position (GDataTasksTask *self, const gchar *position)
@@ -452,6 +457,7 @@ gdata_tasks_task_set_position (GDataTasksTask *self, const gchar *position)
  *
  * Return value: notes of the task, or %NULL
  *
+ * Since: 0.13.4
  */
 const gchar *
 gdata_tasks_task_get_notes (GDataTasksTask *self)
@@ -469,6 +475,7 @@ gdata_tasks_task_get_notes (GDataTasksTask *self)
  *
  * Set @notes to %NULL to unset the property in the task.
  *
+ * Since: 0.13.4
  */
 void
 gdata_tasks_task_set_notes (GDataTasksTask *self, const gchar *notes)
@@ -488,6 +495,7 @@ gdata_tasks_task_set_notes (GDataTasksTask *self, const gchar *notes)
  *
  * Return value: the status of the task, or %NULL
  *
+ * Since: 0.13.4
  */
 const gchar *
 gdata_tasks_task_get_status (GDataTasksTask *self)
@@ -505,6 +513,7 @@ gdata_tasks_task_get_status (GDataTasksTask *self)
  *
  * Set @status to %NULL to unset the property in the task.
  *
+ * Since: 0.13.4
  */
 void
 gdata_tasks_task_set_status (GDataTasksTask *self, const gchar *status)
@@ -523,6 +532,8 @@ gdata_tasks_task_set_status (GDataTasksTask *self, const gchar *status)
  * Gets the #GDataTasksTask:due property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the due property, or <code class="literal">-1</code>
+ * 
+ * Since: 0.13.4
  */
 gint64
 gdata_tasks_task_get_due (GDataTasksTask *self)
@@ -539,6 +550,8 @@ gdata_tasks_task_get_due (GDataTasksTask *self)
  * Sets the #GDataTasksTask:due property of the #GDataTasksTask to the new due time of the task, @due.
  *
  * Set @due to <code class="literal">-1</code> to unset the property in the due time of the task
+ * 
+ * Since: 0.13.4
  */
 void
 gdata_tasks_task_set_due (GDataTasksTask *self, gint64 due)
@@ -557,6 +570,8 @@ gdata_tasks_task_set_due (GDataTasksTask *self, gint64 due)
  * Gets the #GDataTasksTask:completed property. If the property is unset, <code class="literal">-1</code> will be returned.
  *
  * Return value: the completed property, or <code class="literal">-1</code>
+ * 
+ * Since: 0.13.4
  */
 gint64
 gdata_tasks_task_get_completed (GDataTasksTask *self)
@@ -573,6 +588,8 @@ gdata_tasks_task_get_completed (GDataTasksTask *self)
  * Sets the #GDataTasksTask:completed property of the #GDataTasksTask to the new completion time of the task, @due.
  *
  * Set @completed to <code class="literal">-1</code> to unset the property in the completion time of the task
+ * 
+ * Since: 0.13.4
  */
 void
 gdata_tasks_task_set_completed (GDataTasksTask *self, gint64 completed)
@@ -585,29 +602,33 @@ gdata_tasks_task_set_completed (GDataTasksTask *self, gint64 completed)
 }
 
 /**
- * gdata_tasks_task_get_deleted:
+ * gdata_tasks_task_is_deleted:
  * @self: a #GDataTasksTask
  *
- * Gets the #GDataTasksTask:deleted property.
+ * Gets the #GDataTasksTask:is-deleted property.
  *
  * Return value: %TRUE if event is deleted, %FALSE otherwise
+ * 
+ * Since: 0.13.4
  */
 gboolean
-gdata_tasks_task_get_deleted (GDataTasksTask *self)
+gdata_tasks_task_is_deleted (GDataTasksTask *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), FALSE);
 	return self->priv->deleted;
 }
 
 /**
- * gdata_tasks_task_set_deleted:
+ * gdata_tasks_task_set_is_deleted:
  * @self: a #GDataTasksTask
  * @deleted: %TRUE if task is deleted, %FALSE otherwise
  *
- * Sets the #GDataTasksTask:deleted property to @deleted.
+ * Sets the #GDataTasksTask:is-deleted property to @deleted.
+ * 
+ * Since: 0.13.4
  */
 void
-gdata_tasks_task_set_deleted (GDataTasksTask *self, gboolean deleted)
+gdata_tasks_task_set_is_deleted (GDataTasksTask *self, gboolean deleted)
 {
 	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
 	self->priv->deleted = deleted;
@@ -615,29 +636,33 @@ gdata_tasks_task_set_deleted (GDataTasksTask *self, gboolean deleted)
 }
 
 /**
- * gdata_tasks_task_get_hidden:
+ * gdata_tasks_task_is_hidden:
  * @self: a #GDataTasksTask
  *
- * Gets the #GDataTasksTask:hidden property.
+ * Gets the #GDataTasksTask:is-hidden property.
  *
  * Return value: %TRUE if event is hidden, %FALSE otherwise
+ * 
+ * Since: 0.13.4
  */
 gboolean
-gdata_tasks_task_get_hidden (GDataTasksTask *self)
+gdata_tasks_task_is_hidden (GDataTasksTask *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), FALSE);
 	return self->priv->hidden;
 }
 
 /**
- * gdata_tasks_task_set_hidden:
+ * gdata_tasks_task_set_is_hidden:
  * @self: a #GDataTasksTask
  * @hidden: %TRUE if task is hidden, %FALSE otherwise
  *
- * Sets the #GDataTasksTask:hidden property to @hidden.
+ * Sets the #GDataTasksTask:is-hidden property to @hidden.
+ * 
+ * Since: 0.13.4
  */
 void
-gdata_tasks_task_set_hidden (GDataTasksTask *self, gboolean hidden)
+gdata_tasks_task_set_is_hidden (GDataTasksTask *self, gboolean hidden)
 {
 	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
 	self->priv->hidden = hidden;
