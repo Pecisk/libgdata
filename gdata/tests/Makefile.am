@@ -60,6 +60,9 @@ client_login_authorizer_SOURCES	 = client-login-authorizer.c $(TEST_SRCS)
 TEST_PROGS			+= oauth1-authorizer
 oauth1_authorizer_SOURCES	 = oauth1-authorizer.c $(TEST_SRCS)
 
+TEST_PROGS			+= tasks
+tasks_SOURCES			 = tasks.c $(TEST_SRCS)
+
 EXTRA_DIST += \
 	photo.jpg		\
 	sample.ogg		\
