@@ -404,12 +404,12 @@ gdata_tasks_query_get_completed_min (GDataTasksQuery *self)
 /**
  * gdata_tasks_query_set_completed_min:
  * @self: a #GDataTasksQuery
- * @completed_max: lower bound for a task's completion date by UNIX timestamp, or  <code class="literal">-1</code>
+ * @completed_min: lower bound for a task's completion date by UNIX timestamp, or  <code class="literal">-1</code>
  * 
  * Sets the #GDataTasksQuery:completed-min property of the #GDataTasksQuery
  * to the new time/date, @completed_min.
  * 
- * Set @completed_max to <code class="literal">-1</code> to unset the property in the query URI.
+ * Set @completed_min to <code class="literal">-1</code> to unset the property in the query URI.
  * 
  * Since: 0.13.4
  */
@@ -483,12 +483,12 @@ gdata_tasks_query_get_due_min (GDataTasksQuery *self)
 /**
  * gdata_tasks_query_set_due_min:
  * @self: a #GDataTasksQuery
- * @due_max: lower bound for a task's due date by UNIX timestamp, or  <code class="literal">-1</code>
+ * @due_min: lower bound for a task's due date by UNIX timestamp, or  <code class="literal">-1</code>
  * 
  * Sets the #GDataTasksQuery:due-min property of the #GDataTasksQuery
  * to the new time/date, @due_min.
  * 
- * Set @due_max to <code class="literal">-1</code> to unset the property in the query URI.
+ * Set @due_min to <code class="literal">-1</code> to unset the property in the query URI.
  * 
  * Since: 0.13.4
  */

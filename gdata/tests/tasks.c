@@ -23,7 +23,7 @@ int main (int argc, char *argv[]) {
 	g_free (authentication_uri);
 	
 	/* Read verifier token pasted by user */
-	g_scanf ("%s", verifier);
+	scanf ("%s", verifier);
 	
 	/* Authorise the token */
 	g_assert (gdata_oauth1_authorizer_request_authorization (authorizer, token, token_secret, verifier, NULL, NULL) == TRUE);

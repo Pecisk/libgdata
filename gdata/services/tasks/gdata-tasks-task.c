@@ -583,7 +583,7 @@ gdata_tasks_task_get_completed (GDataTasksTask *self)
 /**
  * gdata_tasks_task_set_completed:
  * @self: a #GDataTasksTask
- * @due: completion time of the task, or <code class="literal">-1</code>
+ * @completed: completion time of the task, or <code class="literal">-1</code>
  *
  * Sets the #GDataTasksTask:completed property of the #GDataTasksTask to the new completion time of the task, @due.
  *
