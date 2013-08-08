@@ -2,19 +2,34 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "common.h"
-
+#include "gdata-goa-authorizer.h"
 int main (int argc, char *argv[]) {
-	GDataAuthorizer *authorizer = NULL;
+	GDataOAuth1Authorizer *authorizer = NULL;
 	GDataService *service = NULL;
 	GDataFeed *feed = NULL;
 	GError *error = NULL;
-		
+	GoaObject *goa_object;
+	
 	gdata_test_init (argc, argv);
-	authorizer = GDATA_AUTHORIZER (gdata_client_login_authorizer_new (CLIENT_ID, GDATA_TYPE_TASKS_SERVICE));
-	gdata_client_login_authorizer_authenticate (GDATA_CLIENT_LOGIN_AUTHORIZER (authorizer), USERNAME, PASSWORD, NULL, NULL);
 
-	service = GDATA_SERVICE (gdata_tasks_service_new (authorizer));
-		
+	gchar *authentication_uri, *token, *token_secret, *verifier;
+	authorizer = gdata_oauth1_authorizer_new ("Application name", GDATA_TYPE_TASKS_SERVICE);
+	
+	/* Get an authentication URI */
+	authentication_uri = gdata_oauth1_authorizer_request_authentication_uri (authorizer, &token, &token_secret, NULL, NULL);
+	g_assert (authentication_uri != NULL);
+	
+	g_debug ("URI %s\n", authentication_uri);
+	
+	g_free (authentication_uri);
+	
+	/* Read verifier token pasted by user */
+	g_scanf ("%s", verifier);
+	
+	/* Authorise the token */
+	g_assert (gdata_oauth1_authorizer_request_authorization (authorizer, token, token_secret, verifier, NULL, NULL) == TRUE);
+
+	service = GDATA_SERVICE (gdata_tasks_service_new (GDATA_AUTHORIZER (authorizer)));
 	feed = gdata_tasks_service_query_all_tasklists (GDATA_TASKS_SERVICE (service), NULL, NULL, NULL, NULL, &error);
 
 	g_assert_no_error (error);
