@@ -2,13 +2,12 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "common.h"
-#include "gdata-goa-authorizer.h"
+
 int main (int argc, char *argv[]) {
 	GDataOAuth1Authorizer *authorizer = NULL;
 	GDataService *service = NULL;
 	GDataFeed *feed = NULL;
 	GError *error = NULL;
-	GoaObject *goa_object;
 	
 	gdata_test_init (argc, argv);
 
