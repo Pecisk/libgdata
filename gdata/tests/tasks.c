@@ -11,14 +11,15 @@ int main (int argc, char *argv[]) {
 	
 	gdata_test_init (argc, argv);
 
-	gchar *authentication_uri, *token, *token_secret, *verifier;
+	gchar *authentication_uri, *token, *token_secret;
+	gchar verifier[100];
 	authorizer = gdata_oauth1_authorizer_new ("Application name", GDATA_TYPE_TASKS_SERVICE);
 	
 	/* Get an authentication URI */
 	authentication_uri = gdata_oauth1_authorizer_request_authentication_uri (authorizer, &token, &token_secret, NULL, NULL);
 	g_assert (authentication_uri != NULL);
 	
-	g_debug ("URI %s\n", authentication_uri);
+	printf ("URI %s\n", authentication_uri);
 	
 	g_free (authentication_uri);
 	
