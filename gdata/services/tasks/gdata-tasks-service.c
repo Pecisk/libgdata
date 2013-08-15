@@ -148,7 +148,7 @@ gdata_tasks_service_query_all_tasklists (GDataTasksService *self, GDataQuery *qu
 		return NULL;
 	}
 
-	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", "?key=AIzaSyBu-tk69L2jm7MhgY9fIxLMB-IYKWQNsS8", NULL);
 	feed = gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASKLIST,
 	                            cancellable, progress_callback, progress_user_data, error);
 	g_free (request_uri);
