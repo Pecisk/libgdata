@@ -9,38 +9,15 @@ int main (int argc, char *argv[]) {
 	GDataService *service = NULL;
 	GDataFeed *feed = NULL;
 	GError *error = NULL;
-	
-	gdata_test_init (argc, argv);
-
-	//gchar *authentication_uri, *token, *token_secret;
-	//gchar verifier[100];
-	
-	//authorizer = gdata_oauth1_authorizer_new ("Application name", GDATA_TYPE_TASKS_SERVICE);
-	
-	//printf ("request_authentication_uri stuck");
-	///* Get an authentication URI */
-	//authentication_uri = gdata_oauth1_authorizer_request_authentication_uri (authorizer, &token, &token_secret, NULL, NULL);
-	//g_assert (authentication_uri != NULL);
-	
-	//printf ("URI %s\n", authentication_uri);
-	
-	//g_free (authentication_uri);
-	
-	///* Read verifier token pasted by user */
-	//printf ("Input token: ");
-	//scanf ("%s", verifier);
-	
-	///* Authorise the token */
-	//g_assert (gdata_oauth1_authorizer_request_authorization (authorizer, token, token_secret, verifier, NULL, NULL) == TRUE);
-	
 	GoaClient *client;
 	GoaObject *object;
 	GDataGoaAuthorizer *authorizer;
 	
+	gdata_test_init (argc, argv);
+	
 	client = goa_client_new_sync(NULL, &error);
 	g_assert_no_error(error);
-	object = goa_client_lookup_by_id(client, "194575812365.apps.googleusercontent.com" /* hard-code this */);
-	g_object_unref(client);
+	object = goa_client_lookup_by_id(client, "account_1377173897" /* Get this from seahorse */);
 	
 	authorizer = gdata_goa_authorizer_new(object);
 	service = GDATA_SERVICE (gdata_tasks_service_new (GDATA_AUTHORIZER (authorizer)));

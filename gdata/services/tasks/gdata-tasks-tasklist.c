@@ -49,10 +49,6 @@ static void gdata_tasks_tasklist_finalize (GObject *object);
 static void get_json (GDataParsable *parsable, GString *json_string);
 static gboolean parse_json (GDataParsable *parsable, JsonReader *node, gpointer user_data, GError **error);
 
-struct _GDataTasksTasklistPrivate {
-	/* FIXME can this be empty? */
-};
-
 G_DEFINE_TYPE (GDataTasksTasklist, gdata_tasks_tasklist, GDATA_TYPE_ENTRY)
 
 static void
@@ -60,8 +56,6 @@ gdata_tasks_tasklist_class_init (GDataTasksTasklistClass *klass)
 {
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	GDataParsableClass *parsable_class = GDATA_PARSABLE_CLASS (klass);
-
-	g_type_class_add_private (klass, sizeof (GDataTasksTasklistPrivate));
 
 	gobject_class->constructor = gdata_tasks_tasklist_constructor;
 	gobject_class->finalize = gdata_tasks_tasklist_finalize;
@@ -73,7 +67,7 @@ gdata_tasks_tasklist_class_init (GDataTasksTasklistClass *klass)
 static void
 gdata_tasks_tasklist_init (GDataTasksTasklist *self)
 {
-	self->priv = G_TYPE_INSTANCE_GET_PRIVATE (self, GDATA_TYPE_TASKS_TASKLIST, GDataTasksTasklistPrivate);
+	/* Empty */
 }
 
 static GObject *

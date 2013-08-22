@@ -35,8 +35,6 @@ G_BEGIN_DECLS
 #define GDATA_IS_TASKS_TASKLIST_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), GDATA_TYPE_TASKS_TASKLIST))
 #define GDATA_TASKS_TASKLIST_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), GDATA_TYPE_TASKS_TASKLIST, GDataTasksTasklistClass))
 
-typedef struct _GDataTasksTasklistPrivate	GDataTasksTasklistPrivate;
-
 /**
  * GDataTasksTasklist:
  *
@@ -44,7 +42,6 @@ typedef struct _GDataTasksTasklistPrivate	GDataTasksTasklistPrivate;
  **/
 typedef struct {
 	GDataEntry parent;
-	GDataTasksTasklistPrivate *priv;
 } GDataTasksTasklist;
 
 /**
