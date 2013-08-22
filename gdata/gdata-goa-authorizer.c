@@ -71,6 +71,7 @@
 #include "services/calendar/gdata-calendar-service.h"
 #include "services/contacts/gdata-contacts-service.h"
 #include "services/documents/gdata-documents-service.h"
+#include "services/tasks/gdata-tasks-service.h"
 
 #define HMAC_SHA1_LEN 20 /* bytes, raw */
 
@@ -385,6 +386,8 @@ gdata_goa_authorizer_set_goa_object (GDataGoaAuthorizer *self, GoaObject *goa_ob
 	if (goa_object_peek_documents (goa_object) != NULL) {
 		add_authorization_domains (self, GDATA_TYPE_DOCUMENTS_SERVICE);
 	}
+	/* FIXME Temoporary while we don't have goa_object_peek_tasks */
+	add_authorization_domains (self, GDATA_TYPE_TASKS_SERVICE);
 }
 
 static void
