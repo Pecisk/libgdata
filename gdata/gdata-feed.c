@@ -598,7 +598,7 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 	GDataFeed *self = GDATA_FEED (parsable);
 	ParseData *data = user_data;
 	
-	if (strcmp (json_reader_get_member_name (reader), "items")) {
+	if (!strcmp (json_reader_get_member_name (reader), "items")) {
 		// loop trough elements array
 		for (i = 0; i < json_reader_count_elements (reader); i++) {
 			json_reader_read_element (reader, i);
