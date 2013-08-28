@@ -265,14 +265,13 @@ gdata_parser_int64_from_iso8601 (const gchar *date, gint64 *_time)
 gboolean
 gdata_parser_error_required_json_content_missing (JsonReader *reader, GError **error)
 {
-	gchar *element_string = (gchar*) json_reader_get_member_name (reader);
+	const gchar *element_string = json_reader_get_member_name (reader);
 
 	/* Translators: the parameter is the name of an JSON element.
 	 *
 	 * For example:
 	 *  A 'title' element was missing required content. */
 	g_set_error (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_PROTOCOL_ERROR, _("A \'%s\' element was missing required content."), element_string);
-	g_free (element_string);
 
 	return FALSE;
 }
@@ -280,14 +279,13 @@ gdata_parser_error_required_json_content_missing (JsonReader *reader, GError **e
 gboolean
 gdata_parser_error_duplicate_json_element (JsonReader *reader, GError **error)
 {
-	gchar *element_string = (gchar*) json_reader_get_member_name (reader);
+	const gchar *element_string = json_reader_get_member_name (reader);
 
 	/* Translators: the parameter is the name of an JSON element.
 	 *
 	 * For example:
 	 *  A singleton element (title) was duplicated. */
 	g_set_error (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_PROTOCOL_ERROR, _("A singleton element (%s) was duplicated."), element_string);
-	g_free (element_string);
 
 	return FALSE;
 }
@@ -295,7 +293,7 @@ gdata_parser_error_duplicate_json_element (JsonReader *reader, GError **error)
 gboolean
 gdata_parser_error_not_iso8601_format_json (JsonReader *reader, const gchar *actual_value, GError **error)
 {
-	gchar *element_string = (gchar*) json_reader_get_member_name (reader);
+	const gchar *element_string = json_reader_get_member_name (reader);
 	g_set_error (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_PROTOCOL_ERROR,
 	             /* Translators: the first parameter is the name of an JSON element,
 	              * and the second parameter is the erroneous value (which was not in ISO 8601 format).
@@ -303,7 +301,6 @@ gdata_parser_error_not_iso8601_format_json (JsonReader *reader, const gchar *act
 	              * For example:
 	              *  The content of a 'uploaded' element ("2009-05-06 26:30Z") was not in ISO 8601 format. */
 	             _("The content of a \'%s\' element (\"%s\") was not in ISO 8601 format."), element_string, actual_value);
-	g_free (element_string);
 
 	return FALSE;
 }
@@ -754,7 +751,7 @@ gboolean
 gdata_parser_string_from_json_member (JsonReader *reader, const gchar *member_name, GDataParserOptions options,
                                   gchar **output, gboolean *success, GError **error)
 {
-	gchar *text;
+	const gchar *text;
 
 	/* Check if there's such element */
 	if (strcmp (json_reader_get_member_name (reader), member_name) != 0) {
@@ -768,9 +765,8 @@ gdata_parser_string_from_json_member (JsonReader *reader, const gchar *member_na
 	}
 
 	/* Get the string and check it for NULLness or emptiness */
-	text = (gchar*) json_reader_get_string_value (reader);
+	text = json_reader_get_string_value (reader);
 	if ((options & P_REQUIRED && text == NULL) || (options & P_NON_EMPTY && text != NULL && *text == '\0')) {
-		g_free (text);
 		*success = gdata_parser_error_required_json_content_missing (reader, error);
 		return TRUE;
 	} else if (options & P_DEFAULT && (text == NULL || *text == '\0')) {
@@ -779,7 +775,7 @@ gdata_parser_string_from_json_member (JsonReader *reader, const gchar *member_na
 
 	/* Success! */
 	g_free (*output);
-	*output = (gchar*) text;
+	*output = g_strdup (text);
 	*success = TRUE;
 
 	return TRUE;
@@ -835,7 +831,6 @@ gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *membe
 	/* Get the string and check it for NULLness */
 	text = (gchar*) json_reader_get_string_value (reader);
 	if (options & P_REQUIRED && (text == NULL || *text == '\0')) {
-		g_free (text);
 		*success = gdata_parser_error_required_json_content_missing (reader, error);
 		return TRUE;
 	}
@@ -843,14 +838,12 @@ gdata_parser_int64_time_from_json_member (JsonReader *reader, const gchar *membe
 	/* Attempt to parse the string as a GTimeVal */
 	if (g_time_val_from_iso8601 ((gchar*) text, &time_val) == FALSE) {
 		*success = gdata_parser_error_not_iso8601_format_json (reader, text, error);
-		g_free (text);
 		return TRUE;
 	}
 
 	*output = time_val.tv_sec;
 
 	/* Success! */
-	g_free (text);
 	*success = TRUE;
 
 	return TRUE;

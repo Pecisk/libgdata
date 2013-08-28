@@ -231,6 +231,8 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
                                      GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
 {
 	const gchar *uri;
+	gchar* request_uri;
+	GDataFeed *feed;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
@@ -254,10 +256,13 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 		                     _("The tasklist did not have a content URI."));
 		return NULL;
 	}
-
+	/* Should add /tasks as requested by API */
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (tasklist), "/tasks", NULL);
 	/* Execute the query */
-	return gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
+	feed = gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
 	                            progress_callback, progress_user_data, error);
+	g_free (request_uri);
+	return feed;
 }
 
 /**
