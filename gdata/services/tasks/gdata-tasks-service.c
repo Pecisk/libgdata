@@ -257,7 +257,7 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 		return NULL;
 	}
 	/* Should add /tasks as requested by API */
-	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (tasklist), "/tasks", NULL);
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
 	/* Execute the query */
 	feed = gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
 	                            progress_callback, progress_user_data, error);

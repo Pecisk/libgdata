@@ -48,7 +48,7 @@ static void gdata_tasks_task_dispose (GObject *object);
 static void gdata_tasks_task_finalize (GObject *object);
 static void gdata_tasks_task_get_property (GObject *object, guint property_id, GValue *value, GParamSpec *pspec);
 static void gdata_tasks_task_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec);
-static void get_json (GDataParsable *parsable, GString *json_string);
+static void get_json (GDataParsable *parsable, JsonBuilder *builder);
 static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
 
 struct _GDataTasksTaskPrivate {
@@ -329,32 +329,48 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 }
 
 static void
-get_json (GDataParsable *parsable, GString *json_string)
+get_json (GDataParsable *parsable, JsonBuilder *builder)
 {
 	GDataTasksTaskPrivate *priv = GDATA_TASKS_TASK (parsable)->priv;
 
 	/* Chain up to the parent class */
-	GDATA_PARSABLE_CLASS (gdata_tasks_task_parent_class)->get_json (parsable, json_string);
+	GDATA_PARSABLE_CLASS (gdata_tasks_task_parent_class)->get_json (parsable, builder);
 
 	/* Add all the task specific JSON */
 
-	if (priv->parent != NULL)
-		gdata_parser_string_append_escaped (json_string, "\"parent\": \"", priv->parent, "\",");
-	if (priv->position != NULL)
-		gdata_parser_string_append_escaped (json_string, "\"position\": \"", priv->position, "\",");
-	if (priv->notes != NULL)
-		gdata_parser_string_append_escaped (json_string, "\"notes\": \"", priv->notes, "\",");
-	if (priv->status != NULL)
-		gdata_parser_string_append_escaped (json_string, "\"status\": \"", priv->status, "\",");
-	if (priv->due != -1)
-		gdata_parser_string_append_escaped (json_string, "\"due\": \"", gdata_parser_int64_to_iso8601 (priv->due), "\",");
-	if (priv->completed != -1)
-		gdata_parser_string_append_escaped (json_string, "\"completed\": \"", gdata_parser_int64_to_iso8601 (priv->completed), "\",");
-	
-	if(priv->deleted == TRUE)
-		gdata_parser_string_append_escaped (json_string, "\"deleted\": \"", "True", "\",");
-	else
-		gdata_parser_string_append_escaped (json_string, "\"deleted\": \"", "False", "\",");
+	if (priv->parent != NULL) {
+		json_builder_set_member_name (builder, "parent");
+		json_builder_add_string_value (builder, priv->parent);
+	}
+	if (priv->position != NULL) {
+		json_builder_set_member_name (builder, "position");
+		json_builder_add_string_value (builder, priv->position);
+	}
+	if (priv->notes != NULL) {
+		json_builder_set_member_name (builder, "notes");
+		json_builder_add_string_value (builder, priv->notes);
+	}
+	if (priv->status != NULL) {
+		json_builder_set_member_name (builder, "status");
+		json_builder_add_string_value (builder, priv->status);
+	}
+	if (priv->due != -1) {
+		json_builder_set_member_name (builder, "due");
+		json_builder_add_string_value (builder, gdata_parser_int64_to_iso8601 (priv->due));
+	}
+	if (priv->completed != -1) {
+		json_builder_set_member_name (builder, "completed");
+		json_builder_add_string_value (builder, gdata_parser_int64_to_iso8601 (priv->completed));
+	}
+
+	if(priv->deleted == TRUE) {
+		json_builder_set_member_name (builder, "deleted");
+		json_builder_add_string_value (builder, "True");
+	}
+	else {
+		json_builder_set_member_name (builder, "deleted");
+		json_builder_add_string_value (builder, "False");
+	}
 }
 
 /**
