@@ -331,3 +331,144 @@ gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTaskli
 	gdata_service_query_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
 	                           progress_callback, progress_user_data, destroy_progress_user_data, callback, user_data);
 }
+
+/**
+ * gdata_tasks_service_insert_task:
+ * @self: a #GDataTasksService
+ * @task: the #GDataTasksTask to insert
+ * @tasklist: #GDataTasksTasklist to insert into
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @error: a #GError, or %NULL
+ *
+ * Inserts @task by uploading it to the online tasks service into tasklist @tasklist.
+ *
+ * For more details, see gdata_service_insert_entry().
+ *
+ * Return value: (transfer full): an updated #GDataTasksTask, or %NULL; unref with g_object_unref()
+ *
+ * Since: UNRELEASED
+ **/
+GDataTasksTask *
+gdata_tasks_service_insert_task (GDataTaskService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
+{
+	gchar *uri;
+	GDataEntry *entry;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
+	entry = gdata_service_insert_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (task), cancellable, error);
+	g_free (uri);
+
+	return GDATA_TASKS_TASK (entry);
+}
+
+/**
+ * gdata_tasks_service_insert_task_async:
+ * @self: a #GDataTasksService
+ * @task: the #GDataTasksTask to insert
+ * @tasklist: #GDataTasksTasklist to insert into
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when insertion is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Inserts @task by uploading it to the online tasks service into tasklist @tasklist. @self and @event are both reffed when this function is called, so can safely be
+ * unreffed after this function returns.
+ *
+ * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTask representing the inserted event and to check for possible
+ * errors.
+ *
+ * For more details, see gdata_task_service_insert_event(), which is the synchronous version of this function, and
+ * gdata_service_insert_entry_async(), which is the base asynchronous insertion function.
+ *
+ * Since: UNRELEASED
+ **/
+void
+gdata_tasks_service_insert_task_async (GDataCalendarService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	gchar *uri;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
+	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (task), cancellable,
+	                                  callback, user_data);
+	g_free (uri);
+}
+
+/**
+ * gdata_tasks_service_insert_tasklist:
+ * @self: a #GDataTasksService
+ * @tasklist: #GDataTasksTasklist to insert
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @error: a #GError, or %NULL
+ *
+ * Inserts @tasklist by uploading it to the online tasks service.
+ *
+ * For more details, see gdata_service_insert_entry().
+ *
+ * Return value: (transfer full): an updated #GDataTasksTasklist, or %NULL; unref with g_object_unref()
+ *
+ * Since: UNRELEASED
+ **/
+GDataTasksTask *
+gdata_tasks_service_insert_tasklist (GDataTaskService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
+{
+	gchar *uri;
+	GDataEntry *entry;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
+	entry = gdata_service_insert_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (tasklist), cancellable, error);
+	g_free (uri);
+
+	return GDATA_TASKS_TASKLIST (entry);
+}
+
+/**
+ * gdata_tasks_service_insert_tasklist_async:
+ * @self: a #GDataTasksService
+ * @tasklist: #GDataTasksTasklist to insert
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when insertion is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Inserts @tasklist by uploading it to the online tasks service. @self and @event are both reffed when this function is called, so can safely be
+ * unreffed after this function returns.
+ *
+ * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTasklist representing the inserted event and to check for possible
+ * errors.
+ *
+ * For more details, see gdata_task_service_insert_event(), which is the synchronous version of this function, and
+ * gdata_service_insert_entry_async(), which is the base asynchronous insertion function.
+ *
+ * Since: UNRELEASED
+ **/
+void
+gdata_tasks_service_insert_tasklist_async (GDataCalendarService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	gchar *uri;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
+	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (tasklist), cancellable,
+	                                  callback, user_data);
+	g_free (uri);
+}

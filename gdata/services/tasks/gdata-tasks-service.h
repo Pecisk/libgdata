@@ -75,6 +75,31 @@ GDataFeed *gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksT
 void gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query,
                                                 GCancellable *cancellable, GDataQueryProgressCallback progress_callback, gpointer progress_user_data,
                                                 GDestroyNotify destroy_progress_user_data, GAsyncReadyCallback callback, gpointer user_data);
+
+GDataTasksTask *gdata_tasks_service_insert_task (GDataTasksService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist,
+                                                      GCancellable *cancellable, GError **error);
+void gdata_tasks_service_insert_task_async (GDataTasksService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist,
+                                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+GDataTasksTask *gdata_tasks_service_insert_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist,
+                                                      GCancellable *cancellable, GError **error);
+void gdata_tasks_service_insert_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist,
+                                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+GDataTasksTask *gdata_tasks_service_delete_task (GDataTasksService *self, GDataTasksTask *task,
+                                                      GCancellable *cancellable, GError **error);
+void gdata_tasks_service_delete_task_async (GDataTasksService *self, GDataTasksTask *task,
+                                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+GDataTasksTask *gdata_tasks_service_delete_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist,
+                                                      GCancellable *cancellable, GError **error);
+void gdata_tasks_service_delete_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist,
+                                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+GDataTasksTask *gdata_tasks_service_update_task (GDataTasksService *self, GDataTasksTask *task,
+                                                      GCancellable *cancellable, GError **error);
+void gdata_tasks_service_update_task_async (GDataTasksService *self, GDataTasksTasklist *task,
+                                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+GDataTasksTask *gdata_tasks_service_update_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist,
+                                                      GCancellable *cancellable, GError **error);
+void gdata_tasks_service_update_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist,
+                                                   GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
 G_END_DECLS
 
 #endif /* !GDATA_CALENDAR_SERVICE_H */
