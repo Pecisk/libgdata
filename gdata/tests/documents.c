@@ -30,6 +30,8 @@
 #include "gdata.h"
 #include "common.h"
 
+static GDataMockServer *mock_server = NULL;
+
 static gboolean
 check_document_is_in_folder (GDataDocumentsDocument *document, GDataDocumentsFolder *folder)
 {
@@ -111,6 +113,8 @@ test_authentication (void)
 	GDataClientLoginAuthorizer *authorizer;
 	GError *error = NULL;
 
+	gdata_test_mock_server_start_trace (mock_server, "authentication");
+
 	/* Create an authorizer */
 	authorizer = gdata_client_login_authorizer_new (CLIENT_ID, GDATA_TYPE_DOCUMENTS_SERVICE);
 
@@ -132,6 +136,8 @@ test_authentication (void)
 	                                                     gdata_documents_service_get_spreadsheet_authorization_domain ()) == TRUE);
 
 	g_object_unref (authorizer);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 GDATA_ASYNC_TEST_FUNCTIONS (authentication, void,
@@ -188,6 +194,8 @@ set_up_temp_folder (TempFolderData *data, gconstpointer service)
 	GDataDocumentsFolder *folder;
 	gchar *upload_uri;
 
+	gdata_test_mock_server_start_trace (mock_server, "setup-temp-folder");
+
 	/* Create a folder */
 	folder = gdata_documents_folder_new (NULL);
 	gdata_entry_set_title (GDATA_ENTRY (folder), "Temporary Folder");
@@ -200,15 +208,21 @@ set_up_temp_folder (TempFolderData *data, gconstpointer service)
 	g_assert (GDATA_IS_DOCUMENTS_FOLDER (data->folder));
 	g_free (upload_uri);
 	g_object_unref (folder);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_temp_folder (TempFolderData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "teardown-temp-folder");
+
 	if (data->folder != NULL) {
 		delete_entry (GDATA_DOCUMENTS_ENTRY (data->folder), GDATA_SERVICE (service));
 		g_object_unref (data->folder);
 	}
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef struct {
@@ -257,8 +271,11 @@ _set_up_temp_document (GDataDocumentsEntry *entry, GDataService *service, GFile 
 
 	/* HACK: Query for the new document, as Google's servers appear to modify it behind our back when creating the document:
 	 * http://code.google.com/a/google.com/p/apps-api-issues/issues/detail?id=2337. We have to wait a few seconds before trying this to allow the
-	 * various Google servers to catch up with each other. */
-	g_usleep (5 * G_USEC_PER_SEC);
+	 * various Google servers to catch up with each other. Thankfully, we don't have to wait when running against the mock server. */
+	if (gdata_mock_server_get_enable_online (mock_server) == TRUE) {
+		g_usleep (5 * G_USEC_PER_SEC);
+	}
+
 	new_document = GDATA_DOCUMENTS_DOCUMENT (gdata_service_query_single_entry (service,
 	                                                                           gdata_documents_service_get_primary_authorization_domain (),
 	                                                                           gdata_entry_get_id (GDATA_ENTRY (document)), NULL,
@@ -277,6 +294,8 @@ set_up_temp_document_spreadsheet (TempDocumentData *data, gconstpointer service)
 	gchar *document_file_path;
 	GFile *document_file;
 
+	gdata_test_mock_server_start_trace (mock_server, "setup-temp-document-spreadsheet");
+
 	/* Create a document */
 	document = gdata_documents_spreadsheet_new (NULL);
 	gdata_entry_set_title (GDATA_ENTRY (document), "Temporary Document (Spreadsheet)");
@@ -289,15 +308,21 @@ set_up_temp_document_spreadsheet (TempDocumentData *data, gconstpointer service)
 
 	g_object_unref (document_file);
 	g_object_unref (document);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_temp_document (TempDocumentData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "teardown-temp-document");
+
 	if (data->document != NULL) {
 		delete_entry (GDATA_DOCUMENTS_ENTRY (data->document), GDATA_SERVICE (service));
 		g_object_unref (data->document);
 	}
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -306,6 +331,8 @@ test_delete_folder (TempFolderData *data, gconstpointer service)
 	gboolean success;
 	GDataEntry *updated_folder;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "delete-folder");
 
 	g_assert (gdata_documents_entry_is_deleted (GDATA_DOCUMENTS_ENTRY (data->folder)) == FALSE);
 
@@ -329,6 +356,8 @@ test_delete_folder (TempFolderData *data, gconstpointer service)
 	g_object_unref (updated_folder);
 	g_object_unref (data->folder);
 	data->folder = NULL;
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -337,6 +366,8 @@ test_delete_document (TempDocumentData *data, gconstpointer service)
 	gboolean success;
 	GDataEntry *updated_document;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "delete-document");
 
 	g_assert (gdata_documents_entry_is_deleted (GDATA_DOCUMENTS_ENTRY (data->document)) == FALSE);
 
@@ -360,6 +391,8 @@ test_delete_document (TempDocumentData *data, gconstpointer service)
 	g_object_unref (updated_document);
 	g_object_unref (data->document);
 	data->document = NULL;
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef struct {
@@ -374,12 +407,15 @@ static void
 set_up_temp_documents (TempDocumentsData *data, gconstpointer service)
 {
 	GDataDocumentsEntry *document;
-	gchar *upload_uri;
+	gchar *upload_uri, *document_file_path;
+	GFile *document_file;
 
 	upload_uri = gdata_documents_service_get_upload_uri (NULL);
 
 	/* Create a temporary folder */
 	set_up_temp_folder ((TempFolderData*) data, service);
+
+	gdata_test_mock_server_start_trace (mock_server, "setup-temp-documents");
 
 	/* Create some temporary documents of different types */
 	document = GDATA_DOCUMENTS_ENTRY (gdata_documents_spreadsheet_new (NULL));
@@ -409,21 +445,27 @@ set_up_temp_documents (TempDocumentsData *data, gconstpointer service)
 	g_assert (GDATA_IS_DOCUMENTS_TEXT (data->text_document));
 	g_object_unref (document);
 
+	document_file_path = g_strconcat (TEST_FILE_DIR, "test.odt", NULL);
+	document_file = g_file_new_for_path (document_file_path);
+	g_free (document_file_path);
+
 	document = GDATA_DOCUMENTS_ENTRY (gdata_documents_document_new (NULL));
 	gdata_entry_set_title (GDATA_ENTRY (document), "Temporary Arbitrary Document");
-	data->arbitrary_document = GDATA_DOCUMENTS_DOCUMENT (
-		gdata_service_insert_entry (GDATA_SERVICE (service), gdata_documents_service_get_primary_authorization_domain (),
-		                            upload_uri, GDATA_ENTRY (document), NULL, NULL)
-	);
+	data->arbitrary_document = _set_up_temp_document (document, GDATA_SERVICE (service), document_file);
 	g_assert (GDATA_IS_DOCUMENTS_DOCUMENT (data->arbitrary_document));
 	g_object_unref (document);
 
+	g_object_unref (document_file);
 	g_free (upload_uri);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_temp_documents (TempDocumentsData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "teardown-temp-documents");
+
 	/* Delete the documents */
 	delete_entry (GDATA_DOCUMENTS_ENTRY (data->spreadsheet_document), GDATA_SERVICE (service));
 	g_object_unref (data->spreadsheet_document);
@@ -437,6 +479,8 @@ tear_down_temp_documents (TempDocumentsData *data, gconstpointer service)
 	delete_entry (GDATA_DOCUMENTS_ENTRY (data->arbitrary_document), GDATA_SERVICE (service));
 	g_object_unref (data->arbitrary_document);
 
+	gdata_mock_server_end_trace (mock_server);
+
 	/* Delete the folder */
 	tear_down_temp_folder ((TempFolderData*) data, service);
 }
@@ -447,6 +491,8 @@ test_query_all_documents_with_folder (TempDocumentsData *data, gconstpointer ser
 	GDataDocumentsFeed *feed;
 	GDataDocumentsQuery *query;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "query-all-documents-with-folder");
 
 	query = gdata_documents_query_new (NULL);
 	gdata_documents_query_set_show_folders (query, TRUE);
@@ -460,6 +506,8 @@ test_query_all_documents_with_folder (TempDocumentsData *data, gconstpointer ser
 	g_clear_error (&error);
 	g_object_unref (feed);
 	g_object_unref (query);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -467,6 +515,8 @@ test_query_all_documents (TempDocumentsData *data, gconstpointer service)
 {
 	GDataDocumentsFeed *feed;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "query-all-documents");
 
 	feed = gdata_documents_service_query_documents (GDATA_DOCUMENTS_SERVICE (service), NULL, NULL, NULL, NULL, &error);
 	g_assert_no_error (error);
@@ -476,6 +526,8 @@ test_query_all_documents (TempDocumentsData *data, gconstpointer service)
 	/* TODO: check entries and feed properties */
 
 	g_object_unref (feed);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 GDATA_ASYNC_CLOSURE_FUNCTIONS (temp_documents, TempDocumentsData);
@@ -505,6 +557,8 @@ test_query_all_documents_async_progress_closure (TempDocumentsData *documents_da
 {
 	GDataAsyncProgressClosure *data = g_slice_new0 (GDataAsyncProgressClosure);
 
+	gdata_test_mock_server_start_trace (mock_server, "query-all-documents-async-progress-closure");
+
 	data->main_loop = g_main_loop_new (NULL, TRUE);
 
 	gdata_documents_service_query_documents_async (GDATA_DOCUMENTS_SERVICE (service), NULL, NULL,
@@ -520,6 +574,8 @@ test_query_all_documents_async_progress_closure (TempDocumentsData *documents_da
 	g_assert_cmpuint (data->async_ready_notify_count, ==, 1);
 
 	g_slice_free (GDataAsyncProgressClosure, data);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef enum {
@@ -589,6 +645,16 @@ static void
 set_up_upload_document (UploadDocumentData *data, gconstpointer _test_params)
 {
 	const UploadDocumentTestParams *test_params = _test_params;
+	gchar *trace_name;
+
+	/* The trace name needs to take the test parameters into account. */
+	trace_name = g_strdup_printf ("setup-upload-document_%s-%s-%s-%s",
+	                              payload_type_names[test_params->payload_type],
+	                              folder_type_names[test_params->folder_type],
+	                              resumable_type_names[test_params->resumable_type],
+	                              document_type_names[test_params->document_type]);
+	gdata_test_mock_server_start_trace (mock_server, trace_name);
+	g_free (trace_name);
 
 	data->new_document = NULL;
 
@@ -602,19 +668,34 @@ set_up_upload_document (UploadDocumentData *data, gconstpointer _test_params)
 		default:
 			g_assert_not_reached ();
 	}
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_upload_document (UploadDocumentData *data, gconstpointer _test_params)
 {
 	const UploadDocumentTestParams *test_params = _test_params;
+	gchar *trace_name;
+
+	/* The trace name needs to take the test parameters into account. */
+	trace_name = g_strdup_printf ("teardown-upload-document_%s-%s-%s-%s",
+	                              payload_type_names[test_params->payload_type],
+	                              folder_type_names[test_params->folder_type],
+	                              resumable_type_names[test_params->resumable_type],
+	                              document_type_names[test_params->document_type]);
+	gdata_test_mock_server_start_trace (mock_server, trace_name);
+	g_free (trace_name);
 
 	/* Delete the new file */
 	if (data->new_document != NULL) {
 		/* HACK: Query for the new document, as Google's servers appear to modify it behind our back if we don't upload both metadata and data
 		 * when creating the document: http://code.google.com/a/google.com/p/apps-api-issues/issues/detail?id=2337. We have to wait a few
 		 * seconds before trying this to allow the various Google servers to catch up with each other. */
-		g_usleep (5 * G_USEC_PER_SEC);
+		if (gdata_mock_server_get_enable_online (mock_server) == TRUE) {
+			g_usleep (5 * G_USEC_PER_SEC);
+		}
+
 		delete_entry (GDATA_DOCUMENTS_ENTRY (data->new_document), GDATA_SERVICE (test_params->service));
 		g_object_unref (data->new_document);
 	}
@@ -624,6 +705,8 @@ tear_down_upload_document (UploadDocumentData *data, gconstpointer _test_params)
 		delete_entry (GDATA_DOCUMENTS_ENTRY (data->folder), GDATA_SERVICE (test_params->service));
 		g_object_unref (data->folder);
 	}
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -632,12 +715,22 @@ test_upload (UploadDocumentData *data, gconstpointer _test_params)
 	const UploadDocumentTestParams *test_params = _test_params;
 
 	GDataDocumentsDocument *document = NULL;
-	const gchar *document_filename = NULL;
+	const gchar *document_filename = NULL, *document_title = NULL;
+	gchar *trace_name;
 	GFile *document_file = NULL;
 	GFileInfo *file_info = NULL;
 	GDataDocumentsUploadQuery *upload_query = NULL;
 	GDataLink *edit_media_link;
 	GError *error = NULL;
+
+	/* The trace name needs to take the test parameters into account. */
+	trace_name = g_strdup_printf ("upload_%s-%s-%s-%s",
+	                              payload_type_names[test_params->payload_type],
+	                              folder_type_names[test_params->folder_type],
+	                              resumable_type_names[test_params->resumable_type],
+	                              document_type_names[test_params->document_type]);
+	gdata_test_mock_server_start_trace (mock_server, trace_name);
+	g_free (trace_name);
 
 	upload_query = gdata_documents_upload_query_new ();
 
@@ -646,16 +739,19 @@ test_upload (UploadDocumentData *data, gconstpointer _test_params)
 		case UPLOAD_ODT_CONVERT:
 			/* ODT file. */
 			document_filename = "test.odt";
+			document_title = "test";
 			gdata_documents_upload_query_set_convert (upload_query, TRUE);
 			break;
 		case UPLOAD_ODT_NO_CONVERT:
 			/* ODT file. */
 			document_filename = "test.odt";
+			document_title = "test";
 			gdata_documents_upload_query_set_convert (upload_query, FALSE);
 			break;
 		case UPLOAD_BIN_NO_CONVERT:
 			/* Arbitrary binary file. */
 			document_filename = "sample.ogg";
+			document_title = "sample";
 			gdata_documents_upload_query_set_convert (upload_query, FALSE);
 			break;
 		default:
@@ -666,6 +762,7 @@ test_upload (UploadDocumentData *data, gconstpointer _test_params)
 	switch (test_params->payload_type) {
 		case UPLOAD_METADATA_ONLY:
 			document_filename = NULL;
+			document_title = NULL;
 			document_file = NULL;
 			file_info = NULL;
 			break;
@@ -788,7 +885,7 @@ test_upload (UploadDocumentData *data, gconstpointer _test_params)
 		case UPLOAD_CONTENT_ONLY:
 			/* HACK: The title returned by the server varies depending on how we uploaded the document. */
 			if (test_params->resumable_type == UPLOAD_NON_RESUMABLE) {
-				g_assert_cmpstr (gdata_entry_get_title (GDATA_ENTRY (data->new_document)), ==, document_filename);
+				g_assert_cmpstr (gdata_entry_get_title (GDATA_ENTRY (data->new_document)), ==, document_title);
 			} else {
 				g_assert_cmpstr (gdata_entry_get_title (GDATA_ENTRY (data->new_document)), ==, "Untitled");
 			}
@@ -842,6 +939,8 @@ test_upload (UploadDocumentData *data, gconstpointer _test_params)
 	g_clear_object (&upload_query);
 	g_clear_object (&document_file);
 	g_clear_object (&document);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef struct {
@@ -861,8 +960,15 @@ set_up_update_document (UpdateDocumentData *data, gconstpointer _test_params)
 {
 	const UpdateDocumentTestParams *test_params = _test_params;
 	GDataDocumentsText *document;
-	gchar *title, *document_file_path;
+	gchar *title, *document_file_path, *trace_name;
 	GFile *document_file;
+
+	/* The trace name needs to take the test parameters into account. */
+	trace_name = g_strdup_printf ("setup-update-document_%s-%s",
+	                              payload_type_names[test_params->payload_type],
+	                              resumable_type_names[test_params->resumable_type]);
+	gdata_test_mock_server_start_trace (mock_server, trace_name);
+	g_free (trace_name);
 
 	/* Create a document */
 	document = gdata_documents_text_new (NULL);
@@ -878,22 +984,37 @@ set_up_update_document (UpdateDocumentData *data, gconstpointer _test_params)
 
 	g_object_unref (document_file);
 	g_object_unref (document);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_update_document (UpdateDocumentData *data, gconstpointer _test_params)
 {
 	const UpdateDocumentTestParams *test_params = _test_params;
+	gchar *trace_name;
+
+	/* The trace name needs to take the test parameters into account. */
+	trace_name = g_strdup_printf ("teardown-update-document_%s-%s",
+	                              payload_type_names[test_params->payload_type],
+	                              resumable_type_names[test_params->resumable_type]);
+	gdata_test_mock_server_start_trace (mock_server, trace_name);
+	g_free (trace_name);
 
 	/* Delete the new file */
 	if (data->document != NULL) {
 		/* HACK: Query for the new document, as Google's servers appear to modify it behind our back if we don't update both metadata and data
 		 * when creating the document: http://code.google.com/a/google.com/p/apps-api-issues/issues/detail?id=2337. We have to wait a few
 		 * seconds before trying this to allow the various Google servers to catch up with each other. */
-		g_usleep (5 * G_USEC_PER_SEC);
+		if (gdata_mock_server_get_enable_online (mock_server) == TRUE) {
+			g_usleep (5 * G_USEC_PER_SEC);
+		}
+
 		delete_entry (GDATA_DOCUMENTS_ENTRY (data->document), GDATA_SERVICE (test_params->service));
 		g_object_unref (data->document);
 	}
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -902,8 +1023,15 @@ test_update (UpdateDocumentData *data, gconstpointer _test_params)
 	const UpdateDocumentTestParams *test_params = _test_params;
 
 	GDataDocumentsDocument *updated_document;
-	gchar *original_title;
+	gchar *original_title, *trace_name;
 	GError *error = NULL;
+
+	/* The trace name needs to take the test parameters into account. */
+	trace_name = g_strdup_printf ("update_%s-%s",
+	                              payload_type_names[test_params->payload_type],
+	                              resumable_type_names[test_params->resumable_type]);
+	gdata_test_mock_server_start_trace (mock_server, trace_name);
+	g_free (trace_name);
 
 	switch (test_params->payload_type) {
 		case UPLOAD_METADATA_ONLY:
@@ -1005,6 +1133,8 @@ test_update (UpdateDocumentData *data, gconstpointer _test_params)
 
 	g_free (original_title);
 	g_object_unref (updated_document);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef struct {
@@ -1024,9 +1154,13 @@ set_up_copy_document (TempCopyDocumentData *data, gconstpointer service)
 static void
 tear_down_copy_document (TempCopyDocumentData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "teardown-copy-document");
+
 	/* Delete the copied document */
 	delete_entry (GDATA_DOCUMENTS_ENTRY (data->new_document), GDATA_SERVICE (service));
 	g_object_unref (data->new_document);
+
+	gdata_mock_server_end_trace (mock_server);
 
 	/* Delete the folder */
 	tear_down_temp_document ((TempDocumentData*) data, service);
@@ -1037,6 +1171,8 @@ test_copy_document (TempCopyDocumentData *data, gconstpointer service)
 {
 	GError *error = NULL;
 
+	gdata_test_mock_server_start_trace (mock_server, "copy-document");
+
 	/* Copy the document */
 	data->new_document = gdata_documents_service_copy_document (GDATA_DOCUMENTS_SERVICE (service), data->parent.document, NULL, &error);
 	g_assert_no_error (error);
@@ -1045,6 +1181,8 @@ test_copy_document (TempCopyDocumentData *data, gconstpointer service)
 	/* Check their IDs are different but that their other properties (e.g. title) are the same. */
 	g_assert_cmpstr (gdata_entry_get_id (GDATA_ENTRY (data->parent.document)), !=, gdata_entry_get_id (GDATA_ENTRY (data->new_document)));
 	g_assert_cmpstr (gdata_entry_get_title (GDATA_ENTRY (data->parent.document)), ==, gdata_entry_get_title (GDATA_ENTRY (data->new_document)));
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef struct {
@@ -1121,7 +1259,10 @@ set_up_folders (FoldersData *data, GDataDocumentsService *service, gboolean init
 	/* HACK: Query for the new document, as Google's servers appear to modify it behind our back when creating the document:
 	 * http://code.google.com/a/google.com/p/apps-api-issues/issues/detail?id=2337. We have to wait a few seconds before trying this to allow the
 	 * various Google servers to catch up with each other. */
-	g_usleep (5 * G_USEC_PER_SEC);
+	if (gdata_mock_server_get_enable_online (mock_server) == TRUE) {
+		g_usleep (5 * G_USEC_PER_SEC);
+	}
+
 	data->document = GDATA_DOCUMENTS_DOCUMENT (gdata_service_query_single_entry (GDATA_SERVICE (service),
 	                                                                             gdata_documents_service_get_primary_authorization_domain (),
 	                                                                             gdata_entry_get_id (GDATA_ENTRY (new_document)), NULL,
@@ -1132,17 +1273,23 @@ set_up_folders (FoldersData *data, GDataDocumentsService *service, gboolean init
 static void
 set_up_folders_add_to_folder (FoldersData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "setup-folders-add-to-folder");
 	set_up_folders (data, GDATA_DOCUMENTS_SERVICE (service), FALSE);
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_folders_add_to_folder (FoldersData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "teardown-folders-add-to-folder");
+
 	delete_entry (GDATA_DOCUMENTS_ENTRY (data->document), GDATA_SERVICE (service));
 	g_object_unref (data->document);
 
 	delete_entry (GDATA_DOCUMENTS_ENTRY (data->folder), GDATA_SERVICE (service));
 	g_object_unref (data->folder);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1150,6 +1297,8 @@ test_folders_add_to_folder (FoldersData *data, gconstpointer service)
 {
 	GDataDocumentsDocument *new_document;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "folders-add-to-folder");
 
 	/* Add the document to the folder */
 	new_document = GDATA_DOCUMENTS_DOCUMENT (gdata_documents_service_add_entry_to_folder (GDATA_DOCUMENTS_SERVICE (service),
@@ -1163,6 +1312,8 @@ test_folders_add_to_folder (FoldersData *data, gconstpointer service)
 	g_assert (check_document_is_in_folder (new_document, data->folder) == TRUE);
 
 	g_object_unref (new_document);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 GDATA_ASYNC_CLOSURE_FUNCTIONS (folders_add_to_folder, FoldersData);
@@ -1194,7 +1345,9 @@ G_STMT_START {
 static void
 set_up_folders_remove_from_folder (FoldersData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "setup-folders-remove-from-folder");
 	set_up_folders (data, GDATA_DOCUMENTS_SERVICE (service), TRUE);
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1209,6 +1362,8 @@ test_folders_remove_from_folder (FoldersData *data, gconstpointer service)
 	GDataDocumentsDocument *new_document;
 	GError *error = NULL;
 
+	gdata_test_mock_server_start_trace (mock_server, "folders-remove-from-folder");
+
 	/* Remove the document from the folder */
 	new_document = GDATA_DOCUMENTS_DOCUMENT (gdata_documents_service_remove_entry_from_folder (GDATA_DOCUMENTS_SERVICE (service),
 	                                                                                           GDATA_DOCUMENTS_ENTRY (data->document),
@@ -1221,6 +1376,8 @@ test_folders_remove_from_folder (FoldersData *data, gconstpointer service)
 	g_assert (check_document_is_in_folder (new_document, data->folder) == FALSE);
 
 	g_object_unref (new_document);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 GDATA_ASYNC_CLOSURE_FUNCTIONS (folders_remove_from_folder, FoldersData);
@@ -1233,6 +1390,7 @@ G_STMT_START {
 } G_STMT_END,
 G_STMT_START {
 	GDataDocumentsEntry *entry;
+	GDataEntry *new_entry;
 
 	entry = gdata_documents_service_remove_entry_from_folder_finish (GDATA_DOCUMENTS_SERVICE (obj), async_result, &error);
 
@@ -1247,6 +1405,22 @@ G_STMT_START {
 	} else {
 		g_assert (entry == NULL);
 	}
+
+	/* Since this code is called for the cancellation tests, we don't know exactly how many requests will be made
+	 * before cancellation kicks in; so the epilogue request (below) needs to be in a separate trace file. */
+	gdata_mock_server_end_trace (mock_server);
+	gdata_test_mock_server_start_trace (mock_server, "folders_remove_from_folder-async-epilogue");
+
+	/* With the longer cancellation timeouts, the server can somehow modify the document without getting around to completely
+	 * deleting it; hence its ETag changes, but it isn't marked as deleted. Joy of joys. Re-query for the document after every
+	 * attempt to ensure we've always got the latest ETag value. */
+	new_entry = gdata_service_query_single_entry (GDATA_SERVICE (obj), gdata_documents_service_get_primary_authorization_domain (),
+	                                              gdata_entry_get_id (GDATA_ENTRY (data->document)), NULL,
+	                                              G_OBJECT_TYPE (data->document), NULL, NULL);
+	g_assert (GDATA_IS_DOCUMENTS_ENTRY (new_entry));
+
+	g_object_unref (data->document);
+	data->document = GDATA_DOCUMENTS_DOCUMENT (new_entry);
 } G_STMT_END);
 
 static void
@@ -1323,10 +1497,14 @@ _test_download_document (GDataDocumentsDocument *document, GDataService *service
 static void
 test_download_document (TempDocumentsData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "download-document");
+
 	_test_download_document (GDATA_DOCUMENTS_DOCUMENT (data->spreadsheet_document), GDATA_SERVICE (service));
 	_test_download_document (GDATA_DOCUMENTS_DOCUMENT (data->presentation_document), GDATA_SERVICE (service));
 	_test_download_document (GDATA_DOCUMENTS_DOCUMENT (data->text_document), GDATA_SERVICE (service));
 	_test_download_document (GDATA_DOCUMENTS_DOCUMENT (data->arbitrary_document), GDATA_SERVICE (service));
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1349,6 +1527,8 @@ test_download_thumbnail (TempDocumentData *data, gconstpointer service)
 		                gdata_documents_entry_get_resource_id (GDATA_DOCUMENTS_ENTRY (data->document)));
 		return;
 	}
+
+	gdata_test_mock_server_start_trace (mock_server, "download-thumbnail");
 
 	/* Download the thumbnail to a file for testing (in case we weren't compiled with GdkPixbuf support) */
 	download_stream = GDATA_DOWNLOAD_STREAM (gdata_download_stream_new (GDATA_SERVICE (service), NULL, thumbnail_uri, NULL));
@@ -1401,6 +1581,8 @@ test_download_thumbnail (TempDocumentData *data, gconstpointer service)
 		g_object_unref (pixbuf);
 	}
 #endif /* HAVE_GDK_PIXBUF */
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1409,6 +1591,8 @@ test_access_rule_insert (TempDocumentData *data, gconstpointer service)
 	GDataAccessRule *access_rule, *new_access_rule;
 	GDataLink *_link;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "access-rule-insert");
 
 	/* New access rule */
 	access_rule = gdata_access_rule_new (NULL);
@@ -1431,6 +1615,8 @@ test_access_rule_insert (TempDocumentData *data, gconstpointer service)
 
 	g_object_unref (access_rule);
 	g_object_unref (new_access_rule);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1529,6 +1715,31 @@ test_query_etag (void)
 	g_object_unref (query);
 }
 
+/* Test getting and setting the GDataDocumentsUploadQuery:convert property */
+static void
+test_upload_query_properties_convert (void)
+{
+	gboolean convert;
+	GDataDocumentsUploadQuery *query;
+
+	/* Verifying the normal state of the property in a newly-constructed instance of GDataDocumentsUploadQuery */
+	query = gdata_documents_upload_query_new ();
+	g_assert (gdata_documents_upload_query_get_convert (query) == TRUE);
+
+	g_object_get (query, "convert", &convert, NULL);
+	g_assert (convert == TRUE);
+
+	/* Setting the property. */
+	gdata_documents_upload_query_set_convert (query, FALSE);
+	g_assert (gdata_documents_upload_query_get_convert (query) == FALSE);
+
+	/* Setting it another way. */
+	g_object_set (query, "convert", TRUE, NULL);
+	g_assert (gdata_documents_upload_query_get_convert (query) == TRUE);
+
+	g_object_unref (query);
+}
+
 /* Here we hardcode the feed URI, but it should really be extracted from a document feed, as the GDATA_LINK_BATCH link */
 #define BATCH_URI "https://docs.google.com/feeds/default/private/full/batch"
 
@@ -1542,6 +1753,8 @@ test_batch (gconstpointer service)
 	gchar *feed_uri;
 	guint op_id, op_id2, op_id3;
 	GError *error = NULL, *entry_error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "batch");
 
 	operation = gdata_batchable_create_operation (GDATA_BATCHABLE (service), gdata_documents_service_get_primary_authorization_domain (),
 	                                              BATCH_URI);
@@ -1669,6 +1882,8 @@ test_batch (gconstpointer service)
 	g_clear_error (&error);
 	g_object_unref (operation);
 	g_object_unref (inserted_entry3);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 typedef struct {
@@ -1681,6 +1896,8 @@ set_up_batch_async (BatchAsyncData *data, gconstpointer service)
 	GDataDocumentsText *doc;
 	gchar *upload_uri;
 	GError *error = NULL;
+
+	gdata_test_mock_server_start_trace (mock_server, "setup-batch-async");
 
 	/* Insert a new document which we can query asyncly */
 	doc = gdata_documents_text_new (NULL);
@@ -1697,6 +1914,8 @@ set_up_batch_async (BatchAsyncData *data, gconstpointer service)
 	g_clear_error (&error);
 
 	g_object_unref (doc);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1720,6 +1939,8 @@ test_batch_async (BatchAsyncData *data, gconstpointer service)
 	GDataBatchOperation *operation;
 	GMainLoop *main_loop;
 
+	gdata_test_mock_server_start_trace (mock_server, "batch-async");
+
 	/* Run an async query operation on the document */
 	operation = gdata_batchable_create_operation (GDATA_BATCHABLE (service), gdata_documents_service_get_primary_authorization_domain (),
 	                                              BATCH_URI);
@@ -1733,6 +1954,8 @@ test_batch_async (BatchAsyncData *data, gconstpointer service)
 
 	g_main_loop_unref (main_loop);
 	g_object_unref (operation);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
@@ -1758,6 +1981,8 @@ test_batch_async_cancellation (BatchAsyncData *data, gconstpointer service)
 	GCancellable *cancellable;
 	GError *error = NULL;
 
+	gdata_test_mock_server_start_trace (mock_server, "batch-async-cancellation");
+
 	/* Run an async query operation on the document */
 	operation = gdata_batchable_create_operation (GDATA_BATCHABLE (service), gdata_documents_service_get_primary_authorization_domain (),
 	                                              BATCH_URI);
@@ -1778,13 +2003,42 @@ test_batch_async_cancellation (BatchAsyncData *data, gconstpointer service)
 	g_main_loop_unref (main_loop);
 	g_object_unref (cancellable);
 	g_object_unref (operation);
+
+	gdata_mock_server_end_trace (mock_server);
 }
 
 static void
 tear_down_batch_async (BatchAsyncData *data, gconstpointer service)
 {
+	gdata_test_mock_server_start_trace (mock_server, "teardown-batch-async");
+
 	delete_entry (GDATA_DOCUMENTS_ENTRY (data->new_doc), GDATA_SERVICE (service));
 	g_object_unref (data->new_doc);
+
+	gdata_mock_server_end_trace (mock_server);
+}
+
+static void
+mock_server_notify_resolver_cb (GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+	GDataMockServer *server;
+	GDataMockResolver *resolver;
+
+	server = GDATA_MOCK_SERVER (object);
+
+	/* Set up the expected domain names here. This should technically be split up between
+	 * the different unit test suites, but that's too much effort. */
+	resolver = gdata_mock_server_get_resolver (server);
+
+	if (resolver != NULL) {
+		const gchar *ip_address = soup_address_get_physical (gdata_mock_server_get_address (server));
+
+		gdata_mock_resolver_add_A (resolver, "www.google.com", ip_address);
+		gdata_mock_resolver_add_A (resolver, "docs.google.com", ip_address);
+		gdata_mock_resolver_add_A (resolver, "lh3.googleusercontent.com", ip_address);
+		gdata_mock_resolver_add_A (resolver, "lh5.googleusercontent.com", ip_address);
+		gdata_mock_resolver_add_A (resolver, "lh6.googleusercontent.com", ip_address);
+	}
 }
 
 int
@@ -1793,152 +2047,159 @@ main (int argc, char *argv[])
 	gint retval;
 	GDataAuthorizer *authorizer = NULL;
 	GDataService *service = NULL;
+	GFile *trace_directory;
 
 	gdata_test_init (argc, argv);
 
-	if (gdata_test_internet () == TRUE) {
-		authorizer = GDATA_AUTHORIZER (gdata_client_login_authorizer_new (CLIENT_ID, GDATA_TYPE_DOCUMENTS_SERVICE));
-		gdata_client_login_authorizer_authenticate (GDATA_CLIENT_LOGIN_AUTHORIZER (authorizer), DOCUMENTS_USERNAME, PASSWORD, NULL, NULL);
+	mock_server = gdata_test_get_mock_server ();
+	g_signal_connect (G_OBJECT (mock_server), "notify::resolver", (GCallback) mock_server_notify_resolver_cb, NULL);
+	trace_directory = g_file_new_for_path (TEST_FILE_DIR "traces/documents");
+	gdata_mock_server_set_trace_directory (mock_server, trace_directory);
+	g_object_unref (trace_directory);
 
-		service = GDATA_SERVICE (gdata_documents_service_new (authorizer));
+	gdata_test_mock_server_start_trace (mock_server, "global-authentication");
+	authorizer = GDATA_AUTHORIZER (gdata_client_login_authorizer_new (CLIENT_ID, GDATA_TYPE_DOCUMENTS_SERVICE));
+	gdata_client_login_authorizer_authenticate (GDATA_CLIENT_LOGIN_AUTHORIZER (authorizer), DOCUMENTS_USERNAME, PASSWORD, NULL, NULL);
+	gdata_mock_server_end_trace (mock_server);
 
-		g_test_add_func ("/documents/authentication", test_authentication);
-		g_test_add ("/documents/authentication/async", GDataAsyncTestData, NULL, gdata_set_up_async_test_data, test_authentication_async,
-		            gdata_tear_down_async_test_data);
-		g_test_add ("/documents/authentication/async/cancellation", GDataAsyncTestData, NULL, gdata_set_up_async_test_data,
-		            test_authentication_async_cancellation, gdata_tear_down_async_test_data);
+	service = GDATA_SERVICE (gdata_documents_service_new (authorizer));
 
-		g_test_add ("/documents/delete/document", TempDocumentData, service, set_up_temp_document_spreadsheet, test_delete_document,
-		            tear_down_temp_document);
-		g_test_add ("/documents/delete/folder", TempFolderData, service, set_up_temp_folder, test_delete_folder, tear_down_temp_folder);
+	g_test_add_func ("/documents/authentication", test_authentication);
+	g_test_add ("/documents/authentication/async", GDataAsyncTestData, NULL, gdata_set_up_async_test_data, test_authentication_async,
+	            gdata_tear_down_async_test_data);
+	g_test_add ("/documents/authentication/async/cancellation", GDataAsyncTestData, NULL, gdata_set_up_async_test_data,
+	            test_authentication_async_cancellation, gdata_tear_down_async_test_data);
 
-		/* Test all possible combinations of conditions for resumable uploads. */
-		{
-			PayloadType i;
-			FolderType j;
-			ResumableType k;
-			DocumentType l;
+	g_test_add ("/documents/delete/document", TempDocumentData, service, set_up_temp_document_spreadsheet, test_delete_document,
+	            tear_down_temp_document);
+	g_test_add ("/documents/delete/folder", TempFolderData, service, set_up_temp_folder, test_delete_folder, tear_down_temp_folder);
 
-			for (i = 0; i < UPLOAD_PAYLOAD_TYPE_MAX + 1; i++) {
-				for (j = 0; j < UPLOAD_FOLDER_TYPE_MAX + 1; j++) {
-					for (k = 0; k < UPLOAD_RESUMABLE_TYPE_MAX + 1; k++) {
-						for (l = 0; l < UPLOAD_DOCUMENT_TYPE_MAX + 1; l++) {
-							UploadDocumentTestParams *test_params;
-							gchar *test_name;
+	/* Test all possible combinations of conditions for resumable uploads. */
+	{
+		PayloadType i;
+		FolderType j;
+		ResumableType k;
+		DocumentType l;
 
-							/* Resumable metadata-only uploads don't make sense. */
-							if (i == UPLOAD_METADATA_ONLY && k == UPLOAD_RESUMABLE) {
-								continue;
-							}
-							/* Non-resumable non-conversion uploads don't make sense. */
-							if (k == UPLOAD_NON_RESUMABLE && l != UPLOAD_ODT_CONVERT) {
-								continue;
-							}
-
-							test_name = g_strdup_printf ("/documents/upload/%s/%s/%s/%s",
-							                             payload_type_names[i], folder_type_names[j],
-							                             resumable_type_names[k], document_type_names[l]);
-
-							/* Allocate a new struct. We leak this. */
-							test_params = g_slice_new0 (UploadDocumentTestParams);
-							test_params->payload_type = i;
-							test_params->folder_type = j;
-							test_params->resumable_type = k;
-							test_params->document_type = l;
-							test_params->test_name = g_strdup (test_name);
-							test_params->service = GDATA_DOCUMENTS_SERVICE (service);
-
-							g_test_add (test_name, UploadDocumentData, test_params, set_up_upload_document, test_upload,
-							            tear_down_upload_document);
-
-							g_free (test_name);
-						}
-					}
-				}
-			}
-		}
-
-		g_test_add ("/documents/download/document", TempDocumentsData, service, set_up_temp_documents, test_download_document,
-		            tear_down_temp_documents);
-		g_test_add ("/documents/download/thumbnail", TempDocumentData, service, set_up_temp_document_spreadsheet, test_download_thumbnail,
-		            tear_down_temp_document);
-
-		/* Test all possible combinations of conditions for resumable updates. */
-		{
-			PayloadType i;
-			ResumableType j;
-
-			for (i = 0; i < UPLOAD_PAYLOAD_TYPE_MAX + 1; i++) {
-				for (j = 0; j < UPLOAD_RESUMABLE_TYPE_MAX + 1; j++) {
-					UpdateDocumentTestParams *test_params;
+		for (i = 0; i < UPLOAD_PAYLOAD_TYPE_MAX + 1; i++) {
+			for (j = 0; j < UPLOAD_FOLDER_TYPE_MAX + 1; j++) {
+				for (k = 0; k < UPLOAD_RESUMABLE_TYPE_MAX + 1; k++) {
+					for (l = 0; l < UPLOAD_DOCUMENT_TYPE_MAX + 1; l++) {
+					UploadDocumentTestParams *test_params;
 					gchar *test_name;
 
-					/* Resumable metadata-only updates don't make sense. */
-					if (i == UPLOAD_METADATA_ONLY && j == UPLOAD_RESUMABLE) {
-						continue;
+					/* Resumable metadata-only uploads don't make sense. */
+						if (i == UPLOAD_METADATA_ONLY && k == UPLOAD_RESUMABLE) {
+							continue;
+						}
+						/* Non-resumable non-conversion uploads don't make sense. */
+						if (k == UPLOAD_NON_RESUMABLE && l != UPLOAD_ODT_CONVERT) {
+							continue;
+						}
+
+						test_name = g_strdup_printf ("/documents/upload/%s/%s/%s/%s",
+						                             payload_type_names[i], folder_type_names[j],
+						                             resumable_type_names[k], document_type_names[l]);
+
+						/* Allocate a new struct. We leak this. */
+						test_params = g_slice_new0 (UploadDocumentTestParams);
+						test_params->payload_type = i;
+						test_params->folder_type = j;
+						test_params->resumable_type = k;
+						test_params->document_type = l;
+						test_params->test_name = g_strdup (test_name);
+						test_params->service = GDATA_DOCUMENTS_SERVICE (service);
+
+						g_test_add (test_name, UploadDocumentData, test_params, set_up_upload_document, test_upload,
+						            tear_down_upload_document);
+
+						g_free (test_name);
 					}
-
-					test_name = g_strdup_printf ("/documents/update/%s/%s", payload_type_names[i], resumable_type_names[j]);
-
-					/* Allocate a new struct. We leak this. */
-					test_params = g_slice_new0 (UpdateDocumentTestParams);
-					test_params->payload_type = i;
-					test_params->resumable_type = j;
-					test_params->test_name = g_strdup (test_name);
-					test_params->service = GDATA_DOCUMENTS_SERVICE (service);
-
-					g_test_add (test_name, UpdateDocumentData, test_params, set_up_update_document, test_update,
-					            tear_down_update_document);
-
-					g_free (test_name);
 				}
 			}
 		}
-
-		g_test_add ("/documents/access-rule/insert", TempDocumentData, service, set_up_temp_document_spreadsheet, test_access_rule_insert,
-		            tear_down_temp_document);
-
-		g_test_add ("/documents/query/all_documents", TempDocumentsData, service, set_up_temp_documents, test_query_all_documents,
-		            tear_down_temp_documents);
-		g_test_add ("/documents/query/all_documents/with_folder", TempDocumentsData, service, set_up_temp_documents,
-		            test_query_all_documents_with_folder, tear_down_temp_documents);
-		g_test_add ("/documents/query/all_documents/async", GDataAsyncTestData, service, set_up_temp_documents_async,
-		            test_query_all_documents_async, tear_down_temp_documents_async);
-		g_test_add ("/documents/query/all_documents/async/progress_closure", TempDocumentsData, service, set_up_temp_documents,
-		            test_query_all_documents_async_progress_closure, tear_down_temp_documents);
-		g_test_add ("/documents/query/all_documents/async/cancellation", GDataAsyncTestData, service, set_up_temp_documents_async,
-		            test_query_all_documents_async_cancellation, tear_down_temp_documents_async);
-
-		g_test_add ("/documents/copy", TempCopyDocumentData, service, set_up_copy_document, test_copy_document, tear_down_copy_document);
-		/*g_test_add ("/documents/copy/async", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
-		            test_folders_add_to_folder_async, tear_down_folders_add_to_folder_async);
-		g_test_add ("/documents/copy/async/cancellation", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
-		            test_folders_add_to_folder_async_cancellation, tear_down_folders_add_to_folder_async);*/
-
-		g_test_add ("/documents/folders/add_to_folder", FoldersData, service, set_up_folders_add_to_folder,
-		            test_folders_add_to_folder, tear_down_folders_add_to_folder);
-		g_test_add ("/documents/folders/add_to_folder/async", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
-		            test_folders_add_to_folder_async, tear_down_folders_add_to_folder_async);
-		g_test_add ("/documents/folders/add_to_folder/async/cancellation", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
-		            test_folders_add_to_folder_async_cancellation, tear_down_folders_add_to_folder_async);
-
-		g_test_add ("/documents/folders/remove_from_folder", FoldersData, service, set_up_folders_remove_from_folder,
-		            test_folders_remove_from_folder, tear_down_folders_remove_from_folder);
-		g_test_add ("/documents/folders/remove_from_folder/async", GDataAsyncTestData, service, set_up_folders_remove_from_folder_async,
-		            test_folders_remove_from_folder_async, tear_down_folders_remove_from_folder_async);
-		g_test_add ("/documents/folders/remove_from_folder/async/cancellation", GDataAsyncTestData, service,
-		            set_up_folders_remove_from_folder_async, test_folders_remove_from_folder_async_cancellation,
-		            tear_down_folders_remove_from_folder_async);
-
-		g_test_add_data_func ("/documents/batch", service, test_batch);
-		g_test_add ("/documents/batch/async", BatchAsyncData, service, set_up_batch_async, test_batch_async, tear_down_batch_async);
-		g_test_add ("/documents/batch/async/cancellation", BatchAsyncData, service, set_up_batch_async, test_batch_async_cancellation,
-		            tear_down_batch_async);
 	}
 
-	g_test_add_func ("/documents/folder/parser/normal", test_folder_parser_normal);
+	g_test_add ("/documents/download/document", TempDocumentsData, service, set_up_temp_documents, test_download_document,
+	            tear_down_temp_documents);
+	g_test_add ("/documents/download/thumbnail", TempDocumentData, service, set_up_temp_document_spreadsheet, test_download_thumbnail,
+	            tear_down_temp_document);
 
+	/* Test all possible combinations of conditions for resumable updates. */
+	{
+		PayloadType i;
+		ResumableType j;
+
+		for (i = 0; i < UPLOAD_PAYLOAD_TYPE_MAX + 1; i++) {
+			for (j = 0; j < UPLOAD_RESUMABLE_TYPE_MAX + 1; j++) {
+				UpdateDocumentTestParams *test_params;
+				gchar *test_name;
+
+				/* Resumable metadata-only updates don't make sense. */
+				if (i == UPLOAD_METADATA_ONLY && j == UPLOAD_RESUMABLE) {
+					continue;
+				}
+
+				test_name = g_strdup_printf ("/documents/update/%s/%s", payload_type_names[i], resumable_type_names[j]);
+
+				/* Allocate a new struct. We leak this. */
+				test_params = g_slice_new0 (UpdateDocumentTestParams);
+				test_params->payload_type = i;
+				test_params->resumable_type = j;
+				test_params->test_name = g_strdup (test_name);
+				test_params->service = GDATA_DOCUMENTS_SERVICE (service);
+
+				g_test_add (test_name, UpdateDocumentData, test_params, set_up_update_document, test_update,
+				            tear_down_update_document);
+
+				g_free (test_name);
+			}
+		}
+	}
+
+	g_test_add ("/documents/access-rule/insert", TempDocumentData, service, set_up_temp_document_spreadsheet, test_access_rule_insert,
+	            tear_down_temp_document);
+
+	g_test_add ("/documents/query/all_documents", TempDocumentsData, service, set_up_temp_documents, test_query_all_documents,
+	            tear_down_temp_documents);
+	g_test_add ("/documents/query/all_documents/with_folder", TempDocumentsData, service, set_up_temp_documents,
+	            test_query_all_documents_with_folder, tear_down_temp_documents);
+	g_test_add ("/documents/query/all_documents/async", GDataAsyncTestData, service, set_up_temp_documents_async,
+	            test_query_all_documents_async, tear_down_temp_documents_async);
+	g_test_add ("/documents/query/all_documents/async/progress_closure", TempDocumentsData, service, set_up_temp_documents,
+	            test_query_all_documents_async_progress_closure, tear_down_temp_documents);
+	g_test_add ("/documents/query/all_documents/async/cancellation", GDataAsyncTestData, service, set_up_temp_documents_async,
+	            test_query_all_documents_async_cancellation, tear_down_temp_documents_async);
+
+	g_test_add ("/documents/copy", TempCopyDocumentData, service, set_up_copy_document, test_copy_document, tear_down_copy_document);
+	/*g_test_add ("/documents/copy/async", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
+	            test_folders_add_to_folder_async, tear_down_folders_add_to_folder_async);
+	g_test_add ("/documents/copy/async/cancellation", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
+	            test_folders_add_to_folder_async_cancellation, tear_down_folders_add_to_folder_async);*/
+
+	g_test_add ("/documents/folders/add_to_folder", FoldersData, service, set_up_folders_add_to_folder,
+	            test_folders_add_to_folder, tear_down_folders_add_to_folder);
+	g_test_add ("/documents/folders/add_to_folder/async", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
+	            test_folders_add_to_folder_async, tear_down_folders_add_to_folder_async);
+	g_test_add ("/documents/folders/add_to_folder/async/cancellation", GDataAsyncTestData, service, set_up_folders_add_to_folder_async,
+	            test_folders_add_to_folder_async_cancellation, tear_down_folders_add_to_folder_async);
+
+	g_test_add ("/documents/folders/remove_from_folder", FoldersData, service, set_up_folders_remove_from_folder,
+	            test_folders_remove_from_folder, tear_down_folders_remove_from_folder);
+	g_test_add ("/documents/folders/remove_from_folder/async", GDataAsyncTestData, service, set_up_folders_remove_from_folder_async,
+	            test_folders_remove_from_folder_async, tear_down_folders_remove_from_folder_async);
+	g_test_add ("/documents/folders/remove_from_folder/async/cancellation", GDataAsyncTestData, service,
+	            set_up_folders_remove_from_folder_async, test_folders_remove_from_folder_async_cancellation,
+	            tear_down_folders_remove_from_folder_async);
+
+	g_test_add_data_func ("/documents/batch", service, test_batch);
+	g_test_add ("/documents/batch/async", BatchAsyncData, service, set_up_batch_async, test_batch_async, tear_down_batch_async);
+	g_test_add ("/documents/batch/async/cancellation", BatchAsyncData, service, set_up_batch_async, test_batch_async_cancellation,
+	            tear_down_batch_async);
+
+	g_test_add_func ("/documents/folder/parser/normal", test_folder_parser_normal);
 	g_test_add_func ("/documents/query/etag", test_query_etag);
+	g_test_add_func ("/documents/upload-query/properties/convert", test_upload_query_properties_convert);
 
 	retval = g_test_run ();
 

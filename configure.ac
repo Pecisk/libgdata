@@ -2,8 +2,8 @@ AC_PREREQ(2.65)
 
 # Release version
 m4_define(gdata_version_major, 0)
-m4_define(gdata_version_minor, 13)
-m4_define(gdata_version_micro, 4)
+m4_define(gdata_version_minor, 15)
+m4_define(gdata_version_micro, 0)
 
 # API version
 # TODO: This currently isn't used in the library name; once we hit gdata_version_major=1, that should be changed
@@ -13,11 +13,13 @@ m4_define(gdata_api_version_minor, 0)
 AC_INIT([libgdata],[gdata_version_major.gdata_version_minor.gdata_version_micro],[https://bugzilla.gnome.org/enter_bug.cgi?product=libgdata],[libgdata],[http://live.gnome.org/libgdata])
 
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([gdata/gdata.h])
 AC_CONFIG_HEADERS([config.h])
 AC_USE_SYSTEM_EXTENSIONS
 
-AM_INIT_AUTOMAKE([1.9 dist-bzip2 no-dist-gzip check-news subdir-objects])
+# tar-pax is needed for long filename support for trace files
+AM_INIT_AUTOMAKE([1.9 dist-bzip2 no-dist-gzip tar-pax check-news subdir-objects])
 
 # Enable silent build when available (Automake 1.11)
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -47,7 +49,7 @@ JSON_GLIB_REQS=0.15
 #  4. If any interfaces have been removed or changed since the last public release, then set age to 0.
 #
 # Note that versioning started at 2:0:0 to ensure no conflicts with e-d-s' libgdata library, whose maximum version was 1:0:0
-GDATA_LT_VERSION=18:0:5
+GDATA_LT_VERSION=18:2:5
 AC_SUBST(GDATA_LT_VERSION)
 
 GDATA_VERSION_MAJOR=gdata_version_major

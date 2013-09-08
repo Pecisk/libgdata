@@ -409,9 +409,13 @@ static SoupMessage *
 build_message (GDataUploadStream *self, const gchar *method, const gchar *upload_uri)
 {
 	SoupMessage *new_message;
+	SoupURI *_uri;
 
 	/* Build the message */
-	new_message = soup_message_new (method, upload_uri);
+	_uri = soup_uri_new (upload_uri);
+	soup_uri_set_port (_uri, _gdata_service_get_https_port ());
+	new_message = soup_message_new_from_uri (method, _uri);
+	soup_uri_free (_uri);
 
 	/* We don't want to accumulate chunks */
 	soup_message_body_set_accumulate (new_message->request_body, FALSE);
@@ -1055,8 +1059,6 @@ write_next_chunk (GDataUploadStream *self, SoupMessage *message)
 	}
 
 	g_mutex_unlock (&(priv->write_mutex));
-
-	soup_session_unpause_message (priv->session, priv->message);
 }
 
 static void
@@ -1073,32 +1075,10 @@ wrote_headers_cb (SoupMessage *message, GDataUploadStream *self)
 	write_next_chunk (self, message);
 }
 
-typedef struct {
-	GDataUploadStream *upload_stream;
-	SoupMessage *message;
-} WriteNextChunkData;
-
-static void
-write_next_chunk_data_free (WriteNextChunkData *data)
-{
-	g_object_unref (data->message);
-	g_object_unref (data->upload_stream);
-	g_slice_free (WriteNextChunkData, data);
-}
-
-static gboolean
-write_next_chunk_cb (gpointer user_data)
-{
-	WriteNextChunkData *data = user_data;
-	write_next_chunk (data->upload_stream, data->message);
-	return FALSE;
-}
-
 static void
 wrote_body_data_cb (SoupMessage *message, SoupBuffer *buffer, GDataUploadStream *self)
 {
 	GDataUploadStreamPrivate *priv = self->priv;
-	WriteNextChunkData *data;
 
 	/* Signal the main thread that the chunk has been written */
 	g_mutex_lock (&(priv->write_mutex));
@@ -1113,20 +1093,14 @@ wrote_body_data_cb (SoupMessage *message, SoupBuffer *buffer, GDataUploadStream 
 	g_cond_signal (&(priv->write_cond));
 	g_mutex_unlock (&(priv->write_mutex));
 
-	/* Send the next chunk to libsoup. Do so in an idle callback to avoid overflowing the stack. */
-	data = g_slice_new (WriteNextChunkData);
-	data->message = g_object_ref (message);
-	data->upload_stream = g_object_ref (self);
-
-	g_idle_add_full (G_PRIORITY_DEFAULT, write_next_chunk_cb, data, (GDestroyNotify) write_next_chunk_data_free);
+	/* Send the next chunk to libsoup */
+	write_next_chunk (self, message);
 }
 
 static gpointer
 upload_thread (GDataUploadStream *self)
 {
 	GDataUploadStreamPrivate *priv = self->priv;
-
-	g_object_ref (self);
 
 	g_assert (priv->cancellable != NULL);
 
@@ -1266,6 +1240,7 @@ finished_outer:
 	g_cond_signal (&(priv->finished_cond));
 	g_mutex_unlock (&(priv->response_mutex));
 
+	/* Referenced in create_network_thread(). */
 	g_object_unref (self);
 
 	return NULL;
@@ -1277,6 +1252,7 @@ create_network_thread (GDataUploadStream *self, GError **error)
 	GDataUploadStreamPrivate *priv = self->priv;
 
 	g_assert (priv->network_thread == NULL);
+	g_object_ref (self); /* ownership transferred to thread */
 	priv->network_thread = g_thread_try_new ("upload-thread", (GThreadFunc) upload_thread, self, error);
 }
 

@@ -539,9 +539,13 @@ _gdata_service_build_message (GDataService *self, GDataAuthorizationDomain *doma
 {
 	SoupMessage *message;
 	GDataServiceClass *klass;
+	SoupURI *_uri;
 
-	/* Create the message */
-	message = soup_message_new (method, uri);
+	/* Create the message. Allow changing the HTTPS port just for testing. */
+	_uri = soup_uri_new (uri);
+	soup_uri_set_port (_uri, _gdata_service_get_https_port ());
+	message = soup_message_new_from_uri (method, _uri);
+	soup_uri_free (_uri);
 
 	/* Make sure subclasses set their headers */
 	klass = GDATA_SERVICE_GET_CLASS (self);
@@ -689,6 +693,9 @@ _gdata_service_send_message (GDataService *self, SoupMessage *message, GCancella
 			g_free (uri_string);
 			return SOUP_STATUS_NONE;
 		}
+
+		/* Allow overriding the URI for testing. */
+		soup_uri_set_port (new_uri, _gdata_service_get_https_port ());
 
 		soup_message_set_uri (message, new_uri);
 		soup_uri_free (new_uri);
@@ -910,25 +917,29 @@ __gdata_service_query (GDataService *self, GDataAuthorizationDomain *domain, con
 	GDataFeed *feed = NULL;
 	SoupMessage *message;
 	SoupMessageHeaders *headers;
-	gchar *content_type;
-	
+	const gchar *content_type;
+
 	message = _gdata_service_query (self, domain, feed_uri, query, cancellable, error);
 	if (message == NULL)
 		return NULL;
 
 	g_assert (message->response_body->data != NULL);
 	klass = GDATA_SERVICE_GET_CLASS (self);
-	
+
 	headers = message->response_headers;
-	content_type = (gchar*) soup_message_headers_get_content_type (headers, NULL);
-	if (strncmp (content_type, "application/json", 16) == 0) {
-		g_debug("JSON content type detected.\n");
+	content_type = soup_message_headers_get_content_type (headers, NULL);
+
+	if (content_type != NULL && strcmp (content_type, "application/json") == 0) {
+		/* Definitely JSON. */
+		g_debug("JSON content type detected.");
 		feed = _gdata_feed_new_from_json (klass->feed_type, message->response_body->data, message->response_body->length, entry_type,
-										progress_callback, progress_user_data, is_async, error);
-	} else if (strncmp (content_type, "application/atom+xml", 20) == 0) {
-		g_debug("XML content type detected.\n");
+		                                  progress_callback, progress_user_data, is_async, error);
+	} else {
+		/* Potentially XML. Don't bother checking the Content-Type, since the parser
+		 * will fail gracefully if the response body is not valid XML. */
+		g_debug("XML content type detected.");
 		feed = _gdata_feed_new_from_xml (klass->feed_type, message->response_body->data, message->response_body->length, entry_type,
-										progress_callback, progress_user_data, is_async, error);
+		                                 progress_callback, progress_user_data, is_async, error);
 	}
 
 	g_object_unref (message);
@@ -1295,10 +1306,9 @@ gdata_service_insert_entry_finish (GDataService *self, GAsyncResult *async_resul
 		return NULL;
 
 	entry = g_simple_async_result_get_op_res_gpointer (result);
-	if (entry != NULL)
-		return g_object_ref (entry);
+	g_assert (entry != NULL);
 
-	g_assert_not_reached ();
+	return g_object_ref (entry);
 }
 
 /**
@@ -1491,10 +1501,9 @@ gdata_service_update_entry_finish (GDataService *self, GAsyncResult *async_resul
 		return NULL;
 
 	entry = g_simple_async_result_get_op_res_gpointer (result);
-	if (entry != NULL)
-		return g_object_ref (entry);
+	g_assert (entry != NULL);
 
-	g_assert_not_reached ();
+	return g_object_ref (entry);
 }
 
 /**
@@ -1972,6 +1981,40 @@ _gdata_service_fix_uri_scheme (const gchar *uri)
 	return g_strdup (uri);
 }
 
+/**
+ * _gdata_service_get_https_port:
+ *
+ * Gets the destination TCP/IP port number which libgdata should use for all outbound HTTPS traffic.
+ * This defaults to 443, but may be overridden using the <code class="literal">LIBGDATA_HTTPS_PORT</code>
+ * environment variable. This is intended to allow network traffic to be redirected to a local server for
+ * unit testing, with a listening port above 1024 so the tests don't need root privileges.
+ *
+ * The value returned by this function may change at any time (e.g. between unit tests), so callers must not cache the result.
+ *
+ * Return value: port number to use for HTTPS traffic
+ */
+guint
+_gdata_service_get_https_port (void)
+{
+	const gchar *port_string;
+
+	/* Allow changing the HTTPS port just for testing. */
+	port_string = g_getenv ("LIBGDATA_HTTPS_PORT");
+	if (port_string != NULL) {
+		const gchar *end;
+
+		guint64 port = g_ascii_strtoull (port_string, (gchar **) &end, 10);
+
+		if (port != 0 && *end == '\0') {
+			g_debug ("Overriding message port to %" G_GUINT64_FORMAT ".", port);
+			return port;
+		}
+	}
+
+	/* Return the default. */
+	return 443;
+}
+
 /*
  * debug_handler:
  *
@@ -2127,7 +2170,17 @@ _gdata_service_get_log_level (void)
 SoupSession *
 _gdata_service_build_session (void)
 {
-	SoupSession *session = soup_session_sync_new_with_options (SOUP_SESSION_SSL_USE_SYSTEM_CA_FILE, TRUE, NULL);
+	SoupSession *session;
+	gboolean ssl_strict = TRUE;
+
+	/* Iff LIBGDATA_LAX_SSL_CERTIFICATES=1, relax SSL certificate validation to allow using invalid/unsigned certificates for testing. */
+	if (g_strcmp0 (g_getenv ("LIBGDATA_LAX_SSL_CERTIFICATES"), "1") == 0) {
+		ssl_strict = FALSE;
+	}
+
+	session = soup_session_new_with_options ("ssl-strict", ssl_strict,
+	                                         "timeout", 0,
+	                                         NULL);
 
 #ifdef HAVE_GNOME
 	soup_session_add_feature_by_type (session, SOUP_TYPE_GNOME_FEATURES_2_26);

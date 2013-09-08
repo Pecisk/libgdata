@@ -20,6 +20,8 @@
 #include <glib.h>
 #include <gdata/gdata.h>
 
+#include "mock-server.h"
+
 #ifndef GDATA_TEST_COMMON_H
 #define GDATA_TEST_COMMON_H
 
@@ -46,7 +48,8 @@ G_BEGIN_DECLS
 
 void gdata_test_init (int argc, char **argv);
 
-gboolean gdata_test_internet (void);
+GDataMockServer *gdata_test_get_mock_server (void) G_GNUC_WARN_UNUSED_RESULT;
+
 gboolean gdata_test_interactive (void);
 
 guint gdata_test_batch_operation_query (GDataBatchOperation *operation, const gchar *id, GType entry_type,
@@ -61,12 +64,21 @@ gboolean gdata_test_batch_operation_run_finish (GDataBatchOperation *operation, 
 gboolean gdata_test_compare_xml_strings (const gchar *parsable_xml, const gchar *expected_xml, gboolean print_error);
 gboolean gdata_test_compare_xml (GDataParsable *parsable, const gchar *expected_xml, gboolean print_error);
 
+gboolean gdata_test_compare_json_strings (const gchar *parsable_json, const gchar *expected_json, gboolean print_error);
+gboolean gdata_test_compare_json (GDataParsable *parsable, const gchar *expected_json, gboolean print_error);
+
 gboolean gdata_test_compare_kind (GDataEntry *entry, const gchar *expected_term, const gchar *expected_label);
 
-/* Convenience macro */
+/* Convenience macros. */
 #define gdata_test_assert_xml(Parsable, XML) \
 	G_STMT_START { \
 		gboolean _test_success = gdata_test_compare_xml (GDATA_PARSABLE (Parsable), XML, TRUE); \
+		g_assert (_test_success == TRUE); \
+	} G_STMT_END
+
+#define gdata_test_assert_json(Parsable, JSON) \
+	G_STMT_START { \
+		gboolean _test_success = gdata_test_compare_json (GDATA_PARSABLE (Parsable), JSON, TRUE); \
 		g_assert (_test_success == TRUE); \
 	} G_STMT_END
 
@@ -172,6 +184,10 @@ tear_down_##CLOSURE_NAME##_async (GDataAsyncTestData *async_data, gconstpointer 
  * <function>test_<replaceable>TEST_NAME</replaceable>_async</function> and
  * <function>test_<replaceable>TEST_NAME</replaceable>_async_cancellation</function>.
  *
+ * These functions assume the existence of a <varname>mock_server</varname> variable which points to the current #GDataMockServer instance. They
+ * will automatically use traces <varname><replaceable>TEST_NAME</replaceable>-async</varname> and
+ * <varname><replaceable>TEST_NAME</replaceable>-async-cancellation</varname>.
+ *
  * Since: 0.10.0
  */
 #define GDATA_ASYNC_TEST_FUNCTIONS(TEST_NAME, TestStructType, TEST_BEGIN_CODE, TEST_END_CODE) \
@@ -218,11 +234,15 @@ test_##TEST_NAME##_async (GDataAsyncTestData *async_data, gconstpointer service)
  \
 	g_test_message ("Running normal operation test…"); \
  \
+	gdata_test_mock_server_start_trace (mock_server, G_STRINGIFY (TEST_NAME) "-async"); \
+ \
 	{ \
 		TEST_BEGIN_CODE; \
 	} \
  \
 	g_main_loop_run (async_data->main_loop); \
+ \
+	gdata_mock_server_end_trace (mock_server); \
 } \
  \
 static void \
@@ -238,6 +258,8 @@ test_##TEST_NAME##_async_cancellation (GDataAsyncTestData *async_data, gconstpoi
 		GCancellable *cancellable = async_data->cancellable; \
 		GAsyncReadyCallback async_ready_callback = (GAsyncReadyCallback) test_##TEST_NAME##_async_cb; \
 		TestStructType *data = (TestStructType*) async_data->test_data; \
+ \
+		gdata_test_mock_server_start_trace (mock_server, G_STRINGIFY (TEST_NAME) "-async-cancellation"); \
  \
 		(void) data; /* hide potential unused variable warning */ \
  \
@@ -272,6 +294,8 @@ test_##TEST_NAME##_async_cancellation (GDataAsyncTestData *async_data, gconstpoi
 		} else { \
 			async_data->cancellation_timeout *= GDATA_ASYNC_TIMEOUT_MULTIPLIER; \
 		} \
+ \
+		gdata_mock_server_end_trace (mock_server); \
 	} while (async_data->cancellation_successful == TRUE); \
  \
 	/* Clean up the last timeout callback */ \
@@ -286,6 +310,35 @@ void gdata_tear_down_async_test_data (GDataAsyncTestData *async_data, gconstpoin
 
 /* Debugging output in case of assert failure */
 void gdata_test_debug_output (void);
+
+/**
+ * GDataTestRequestErrorData:
+ * @status_code: HTTP response status code
+ * @reason_phrase: HTTP response status phrase
+ * @message_body: HTTP response message body
+ * @error_domain_func: constant function returning the #GQuark for the expected error domain
+ * @error_code: expected error code
+ *
+ * A mapping between a HTTP response emitted by a #GDataMockServer and the error expected to be thrown by the HTTP client.
+ * This is designed for testing error handling in the client code, typically by running a single request through an array
+ * of these such mappings and testing the client code throws the correct error in each case.
+ *
+ * Since: 0.13.4
+ */
+typedef struct {
+	/* HTTP response. */
+	guint status_code;
+	const gchar *reason_phrase;
+	const gchar *message_body;
+	/* Expected GData error. */
+	GQuark (*error_domain_func) (void); /* typically gdata_service_error_quark */
+	gint error_code;
+} GDataTestRequestErrorData;
+
+void gdata_test_set_https_port (GDataMockServer *server);
+void gdata_test_mock_server_start_trace (GDataMockServer *server, const gchar *trace_filename);
+gboolean gdata_test_mock_server_handle_message_error (GDataMockServer *server, SoupMessage *message, SoupClientContext *client, gpointer user_data);
+gboolean gdata_test_mock_server_handle_message_timeout (GDataMockServer *server, SoupMessage *message, SoupClientContext *client, gpointer user_data);
 
 G_END_DECLS
 

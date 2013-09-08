@@ -48,6 +48,8 @@ CFILE_GLOB=$(top_srcdir)/gdata/*.c $(top_srcdir)/gdata/services/*/*.c
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
 IGNORE_HFILES = \
 	common.h		\
+	mock-resolver.h		\
+	mock-server.h		\
 	gdata-private.h		\
 	gdata-parser.h		\
 	gdata-marshal.h		\
@@ -56,7 +58,9 @@ IGNORE_HFILES = \
 	gdata-media-group.h	\
 	gdata-youtube-group.h	\
 	gdata-youtube-control.h	\
+	gdata-youtube-enums.h	\
 	gdata-picasaweb-enums.h	\
+	gdata-documents-enums.h	\
 	gdata-exif-tags.h	\
 	gdata-georss-where.h	\
 	gdata-buffer.h		\
@@ -86,7 +90,8 @@ expand_content_files=
 # signals and properties.
 # e.g. INCLUDES=-I$(top_srcdir) -I$(top_builddir) $(GTK_DEBUG_FLAGS)
 # e.g. GTKDOC_LIBS=$(top_builddir)/gtk/$(gtktargetlib)
-INCLUDES=-I$(top_srcdir) -I$(top_builddir) $(GDATA_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)
+AM_CFLAGS = $(GDATA_CFLAGS)
 GTKDOC_LIBS=$(top_builddir)/gdata/libgdata.la
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.

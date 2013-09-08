@@ -456,6 +456,53 @@ test_entry_get_xml (void)
 }
 
 static void
+test_entry_get_json (void)
+{
+	gint64 updated, published, updated2, published2;
+	GDataEntry *entry, *entry2;
+	gchar *json;
+	GError *error = NULL;
+
+	entry = gdata_entry_new (NULL);
+
+	/* Set the properties more conventionally */
+	gdata_entry_set_title (entry, "Testing title & \"escaping\"");
+	gdata_entry_set_summary (entry, NULL);
+	gdata_entry_set_content (entry, NULL);
+	gdata_entry_set_rights (entry, NULL);
+
+	/* Check the generated JSON's OK */
+	gdata_test_assert_json (entry,
+		"{"
+			"\"title\":\"Testing title & \\\"escaping\\\"\""
+		"}");
+
+	/* Check again by re-parsing the JSON to a GDataEntry. */
+	json = gdata_parsable_get_json (GDATA_PARSABLE (entry));
+	entry2 = GDATA_ENTRY (gdata_parsable_new_from_json (GDATA_TYPE_ENTRY, json, -1, &error));
+	g_assert_no_error (error);
+	g_assert (GDATA_IS_ENTRY (entry2));
+	g_clear_error (&error);
+	g_free (json);
+
+	g_assert_cmpstr (gdata_entry_get_title (entry), ==, gdata_entry_get_title (entry2));
+	g_assert_cmpstr (gdata_entry_get_id (entry), ==, gdata_entry_get_id (entry2)); /* should both be NULL */
+	g_assert_cmpstr (gdata_entry_get_content (entry), ==, gdata_entry_get_content (entry2));
+	g_assert_cmpstr (gdata_entry_get_content_uri (entry), ==, gdata_entry_get_content_uri (entry2)); /* should both be NULL */
+
+	updated = gdata_entry_get_updated (entry);
+	updated2 = gdata_entry_get_updated (entry2);
+	g_assert_cmpuint (updated, ==, updated2);
+
+	published = gdata_entry_get_published (entry);
+	published2 = gdata_entry_get_published (entry2);
+	g_assert_cmpuint (published, ==, published2);
+
+	g_object_unref (entry);
+	g_object_unref (entry2);
+}
+
+static void
 test_entry_parse_xml (void)
 {
 	GDataEntry *entry;
@@ -492,7 +539,76 @@ test_entry_parse_xml (void)
 }
 
 static void
-test_entry_error_handling (void)
+test_entry_parse_json (void)
+{
+	GDataEntry *entry;
+	GError *error = NULL;
+
+	/* Create an entry from JSON with unhandled nodes. */
+	entry = GDATA_ENTRY (gdata_parsable_new_from_json (GDATA_TYPE_ENTRY,
+		"{"
+			"\"title\":\"A title\","
+			"\"updated\":\"2009-01-25T14:07:37Z\","
+			"\"selfLink\":\"http://example.com/\","
+			"\"etag\":\"some-etag\","
+			"\"id\":\"some-id\","
+			"\"kind\":\"kind#kind\","
+			"\"unhandled-boolean\":false,"
+			"\"unhandled-string\":\"this-is-a-string---sometimes\","
+			"\"unhandled-int\":15,"
+			"\"unhandled-double\":42.42,"
+			"\"unhandled-object\":{"
+				"\"a\":true,"
+				"\"b\":true"
+			"},"
+			"\"unhandled-array\":["
+				"1,"
+				"2,"
+				"3"
+			"],"
+			"\"unhandled-null\":null"
+		 "}", -1, &error));
+	g_assert_no_error (error);
+	g_assert (GDATA_IS_ENTRY (entry));
+
+	/* Now check the outputted JSON from the entry still has the unhandled nodes. */
+	gdata_test_assert_json (entry,
+		"{"
+			"\"title\":\"A title\","
+			"\"id\":\"some-id\","
+			"\"updated\":\"2009-01-25T14:07:37Z\","
+			"\"etag\":\"some-etag\","
+			"\"selfLink\":\"http://example.com/\","
+			"\"kind\":\"kind#kind\","
+			"\"unhandled-boolean\":false,"
+			"\"unhandled-string\":\"this-is-a-string---sometimes\","
+			"\"unhandled-int\":15,"
+			"\"unhandled-double\":42.42,"
+			"\"unhandled-object\":{"
+				"\"a\":true,"
+				"\"b\":true"
+			"},"
+			"\"unhandled-array\":["
+				"1,"
+				"2,"
+				"3"
+			"],"
+			"\"unhandled-null\":null"
+		 "}");
+	g_object_unref (entry);
+
+	/* Test parsing of empty titles. */
+	entry = GDATA_ENTRY (gdata_parsable_new_from_json (GDATA_TYPE_ENTRY,
+		"{"
+			"\"title\":\"\""
+		 "}", -1, &error));
+	g_assert_no_error (error);
+	g_assert (GDATA_IS_ENTRY (entry));
+	g_object_unref (entry);
+}
+
+static void
+test_entry_error_handling_xml (void)
 {
 	GDataEntry *entry;
 	GError *error = NULL;
@@ -521,6 +637,56 @@ test_entry_error_handling (void)
 	TEST_XML_ERROR_HANDLING ("<author/>"); /* invalid author */
 
 #undef TEST_XML_ERROR_HANDLING
+}
+
+static void
+test_entry_error_handling_json (void)
+{
+	GDataEntry *entry;
+	GError *error = NULL;
+
+#define TEST_JSON_ERROR_HANDLING(x) \
+	entry = GDATA_ENTRY (gdata_parsable_new_from_json (GDATA_TYPE_ENTRY,x, -1, &error));\
+	g_assert_error (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_PROTOCOL_ERROR);\
+	g_assert (entry == NULL);\
+	g_clear_error (&error)
+#define TEST_JSON_ERROR_HANDLING_PARSER(x) \
+	entry = GDATA_ENTRY (gdata_parsable_new_from_json (GDATA_TYPE_ENTRY,x, -1, &error));\
+	g_assert_error (error, GDATA_PARSER_ERROR, GDATA_PARSER_ERROR_PARSING_STRING);\
+	g_assert (entry == NULL);\
+	g_clear_error (&error)
+
+	/* General structure. */
+	TEST_JSON_ERROR_HANDLING_PARSER ("[true,false,true]"); /* root node is not an object */
+	TEST_JSON_ERROR_HANDLING_PARSER ("false"); /* root node is not an object */
+	TEST_JSON_ERROR_HANDLING_PARSER ("invalid json"); /* totally invalid JSON */
+
+	/* id */
+	TEST_JSON_ERROR_HANDLING ("{\"id\":\"\"}"); /* empty */
+	TEST_JSON_ERROR_HANDLING ("{\"id\":null}"); /* invalid type */
+
+	/* updated */
+	TEST_JSON_ERROR_HANDLING ("{\"updated\":\"not correct\"}"); /* incorrect format */
+	TEST_JSON_ERROR_HANDLING ("{\"updated\":false}"); /* invalid type */
+	TEST_JSON_ERROR_HANDLING ("{\"updated\":\"\"}"); /* empty */
+
+	/* title */
+	TEST_JSON_ERROR_HANDLING ("{\"title\":false}"); /* invalid type */
+
+	/* etag */
+	TEST_JSON_ERROR_HANDLING ("{\"etag\":\"\"}"); /* empty */
+	TEST_JSON_ERROR_HANDLING ("{\"etag\":false}"); /* invalid type */
+
+	/* selfLink */
+	TEST_JSON_ERROR_HANDLING ("{\"selfLink\":\"\"}"); /* empty */
+	TEST_JSON_ERROR_HANDLING ("{\"selfLink\":false}"); /* invalid type */
+
+	/* kind */
+	TEST_JSON_ERROR_HANDLING ("{\"kind\":\"\"}"); /* empty */
+	TEST_JSON_ERROR_HANDLING ("{\"kind\":false}"); /* invalid type */
+
+#undef TEST_JSON_ERROR_HANDLING_PARSER
+#undef TEST_JSON_ERROR_HANDLING
 }
 
 static void
@@ -616,6 +782,7 @@ test_entry_links_remove (void)
 
 	g_object_unref (link2_);
 	g_object_unref (link_);
+	g_object_unref (entry);
 }
 
 static void
@@ -931,6 +1098,208 @@ test_query_categories (void)
 	query_uri = gdata_query_get_query_uri (query, "http://example.com");
 	g_assert_cmpstr (query_uri, ==, "http://example.com/-/A%7C-%7Burn%3Agoogle.com%7DB/-C");
 	g_free (query_uri);
+
+	g_object_unref (query);
+}
+
+static void
+test_query_dates (void)
+{
+	GDataQuery *query;
+	gchar *query_uri;
+
+	query = gdata_query_new ("baz");
+
+	/* updated-min */
+	gdata_query_set_updated_min (query, 1373280114); /* 2013-07-08T10:41:54Z */
+	query_uri = gdata_query_get_query_uri (query, "http://example.com");
+	g_assert_cmpstr (query_uri, ==, "http://example.com?q=baz&updated-min=2013-07-08T10:41:54Z");
+	g_free (query_uri);
+	gdata_query_set_updated_min (query, -1);
+
+	/* updated-max */
+	gdata_query_set_updated_max (query, 1373280114); /* 2013-07-08T10:41:54Z */
+	query_uri = gdata_query_get_query_uri (query, "http://example.com");
+	g_assert_cmpstr (query_uri, ==, "http://example.com?q=baz&updated-max=2013-07-08T10:41:54Z");
+	g_free (query_uri);
+	gdata_query_set_updated_max (query, -1);
+
+	/* published-min */
+	gdata_query_set_published_min (query, 1373280114); /* 2013-07-08T10:41:54Z */
+	query_uri = gdata_query_get_query_uri (query, "http://example.com");
+	g_assert_cmpstr (query_uri, ==, "http://example.com?q=baz&published-min=2013-07-08T10:41:54Z");
+	g_free (query_uri);
+	gdata_query_set_published_min (query, -1);
+
+	/* published-max */
+	gdata_query_set_published_max (query, 1373280114); /* 2013-07-08T10:41:54Z */
+	query_uri = gdata_query_get_query_uri (query, "http://example.com");
+	g_assert_cmpstr (query_uri, ==, "http://example.com?q=baz&published-max=2013-07-08T10:41:54Z");
+	g_free (query_uri);
+	gdata_query_set_published_max (query, -1);
+
+	g_object_unref (query);
+}
+
+static void
+test_query_strict (void)
+{
+	GDataQuery *query;
+	gchar *query_uri;
+
+	query = gdata_query_new ("bar");
+
+	gdata_query_set_is_strict (query, TRUE);
+	query_uri = gdata_query_get_query_uri (query, "http://example.com");
+	g_assert_cmpstr (query_uri, ==, "http://example.com?q=bar&strict=true");
+	g_free (query_uri);
+
+	gdata_query_set_is_strict (query, FALSE);
+	query_uri = gdata_query_get_query_uri (query, "http://example.com");
+	g_assert_cmpstr (query_uri, ==, "http://example.com?q=bar");
+	g_free (query_uri);
+
+	g_object_unref (query);
+}
+
+static void
+test_query_pagination (void)
+{
+	GDataQuery *query;
+	gchar *query_uri;
+
+	query = gdata_query_new ("test");
+	gdata_query_set_max_results (query, 15);
+	gdata_query_set_etag (query, "etag"); /* this should be cleared by pagination */
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&max-results=15");
+	g_free (query_uri);
+
+	/* Try the next and previous pages. */
+	gdata_query_next_page (query);
+	g_assert (gdata_query_get_etag (query) == NULL);
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&start-index=16&max-results=15");
+	g_free (query_uri);
+
+	gdata_query_set_etag (query, "etag");
+	g_assert (gdata_query_previous_page (query) == TRUE);
+	g_assert (gdata_query_get_etag (query) == NULL);
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&max-results=15");
+	g_free (query_uri);
+
+	/* Try another previous page. This should fail, and the ETag should be untouched. */
+	gdata_query_set_etag (query, "etag");
+	g_assert (gdata_query_previous_page (query) == FALSE);
+	g_assert_cmpstr (gdata_query_get_etag (query), ==, "etag");
+
+	g_object_unref (query);
+
+	/* Try the alternate constructor. */
+	query = gdata_query_new_with_limits ("test", 40, 10);
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&start-index=40&max-results=10");
+	g_free (query_uri);
+
+	/* Try the next and previous pages again. */
+	gdata_query_next_page (query);
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&start-index=50&max-results=10");
+	g_free (query_uri);
+
+	g_assert (gdata_query_previous_page (query) == TRUE);
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&start-index=40&max-results=10");
+	g_free (query_uri);
+
+	g_assert (gdata_query_previous_page (query) == TRUE);
+
+	query_uri = gdata_query_get_query_uri (query, "http://example.com/");
+	g_assert_cmpstr (query_uri, ==, "http://example.com/?q=test&start-index=30&max-results=10");
+	g_free (query_uri);
+
+	g_object_unref (query);
+}
+
+static void
+notify_cb (GObject *obj, GParamSpec *pspec, gpointer user_data)
+{
+	gboolean *notification_received = user_data;
+	g_assert (*notification_received == FALSE);
+	*notification_received = TRUE;
+}
+
+static void
+test_query_properties (void)
+{
+	GDataQuery *query;
+	gboolean notification_received = FALSE;
+	gulong handler_id;
+
+	query = gdata_query_new ("default");
+
+#define CHECK_PROPERTY(cmptype, name_hyphens, name_underscores, default_val, new_val, new_val2, val_type, free_val) \
+	{ \
+		val_type val; \
+ \
+		handler_id = g_signal_connect (query, "notify::" name_hyphens, (GCallback) notify_cb, &notification_received); \
+ \
+		g_assert_##cmptype (gdata_query_get_##name_underscores (query), ==, default_val); \
+		g_object_get (query, name_hyphens, &val, NULL); \
+		g_assert_##cmptype (val, ==, default_val); \
+		if (free_val == TRUE) { \
+			g_free ((gpointer) ((guintptr) val)); \
+		} \
+ \
+		notification_received = FALSE; \
+		gdata_query_set_##name_underscores (query, new_val); \
+		g_assert (notification_received == TRUE); \
+ \
+		g_assert_##cmptype (gdata_query_get_##name_underscores (query), ==, new_val); \
+ \
+		notification_received = FALSE; \
+		g_object_set (query, name_hyphens, new_val2, NULL); \
+		g_assert (notification_received == TRUE); \
+ \
+		g_assert_##cmptype (gdata_query_get_##name_underscores (query), ==, new_val2); \
+ \
+		g_signal_handler_disconnect (query, handler_id); \
+	}
+#define CHECK_PROPERTY_STR(name_hyphens, name_underscores, default_val) \
+	CHECK_PROPERTY (cmpstr, name_hyphens, name_underscores, default_val, "new", "new2", gchar*, TRUE)
+#define CHECK_PROPERTY_INT64(name_hyphens, name_underscores, default_val) \
+	CHECK_PROPERTY (cmpint, name_hyphens, name_underscores, default_val, 123, 5134132, gint64, FALSE)
+#define CHECK_PROPERTY_UINT(name_hyphens, name_underscores, default_val) \
+	CHECK_PROPERTY (cmpuint, name_hyphens, name_underscores, default_val, 535, 123, guint, FALSE)
+#define CHECK_PROPERTY_BOOLEAN(name_hyphens, name_underscores, default_val) \
+	CHECK_PROPERTY (cmpuint, name_hyphens, name_underscores, default_val, TRUE, FALSE, gboolean, FALSE)
+
+	CHECK_PROPERTY_STR ("q", q, "default");
+	CHECK_PROPERTY_STR ("categories", categories, NULL);
+	CHECK_PROPERTY_STR ("author", author, NULL);
+	CHECK_PROPERTY_INT64 ("updated-min", updated_min, -1);
+	CHECK_PROPERTY_INT64 ("updated-max", updated_max, -1);
+	CHECK_PROPERTY_INT64 ("published-min", published_min, -1);
+	CHECK_PROPERTY_INT64 ("published-max", published_max, -1);
+	CHECK_PROPERTY_UINT ("start-index", start_index, 0);
+#define gdata_query_get_is_strict gdata_query_is_strict
+	CHECK_PROPERTY_BOOLEAN ("is-strict", is_strict, FALSE);
+#undef gdata_query_get_is_strict
+	CHECK_PROPERTY_UINT ("max-results", max_results, 0);
+	CHECK_PROPERTY_STR ("etag", etag, NULL);
+
+#undef CHECK_PROPERTY_BOOLEAN
+#undef CHECK_PROPERTY_UINT
+#undef CHECK_PROPERTY_INT64
+#undef CHECK_PROPERTY_STR
+#undef CHECK_PROPERTY
 
 	g_object_unref (query);
 }
@@ -1888,6 +2257,23 @@ test_gd_email_address_escaping (void)
 }
 
 static void
+test_gd_email_address_comparison (void)
+{
+	GDataGDEmailAddress *email1, *email2;
+
+	/* Should only compare equal if addresses are equal. */
+	email1 = gdata_gd_email_address_new ("foo@example.com", NULL, NULL, TRUE);
+	email2 = gdata_gd_email_address_new ("foo@example.com", NULL, "label", FALSE);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (email1), GDATA_COMPARABLE (email2)), ==, 0);
+
+	gdata_gd_email_address_set_address (email1, "bar@example.com");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (email1), GDATA_COMPARABLE (email2)), !=, 0);
+
+	g_object_unref (email2);
+	g_object_unref (email1);
+}
+
+static void
 test_gd_im_address (void)
 {
 	GDataGDIMAddress *im, *im2;
@@ -1961,6 +2347,29 @@ test_gd_im_address_escaping (void)
 	                        "address='Fubar &lt;fubar@gmail.com&gt;' protocol='http://schemas.google.com/g/2005#GOOGLE_TALK?foo&amp;bar' "
 	                        "rel='http://schemas.google.com/g/2005#home?foo&amp;bar' label='Personal &amp; Private' primary='true'/>");
 	g_object_unref (im);
+}
+
+static void
+test_gd_im_address_comparison (void)
+{
+	GDataGDIMAddress *im_address1, *im_address2;
+
+	/* Should only compare equal if address and protocol are both equal. */
+	im_address1 = gdata_gd_im_address_new ("foo@example.com", GDATA_GD_IM_PROTOCOL_LIVE_MESSENGER, NULL, NULL, TRUE);
+	im_address2 = gdata_gd_im_address_new ("foo@example.com", GDATA_GD_IM_PROTOCOL_LIVE_MESSENGER, NULL, "label", FALSE);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (im_address1), GDATA_COMPARABLE (im_address2)), ==, 0);
+
+	/* Different addresses, same protocol. */
+	gdata_gd_im_address_set_address (im_address1, "bar@example.com");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (im_address1), GDATA_COMPARABLE (im_address2)), !=, 0);
+
+	/* Same address, different protocols. */
+	gdata_gd_im_address_set_address (im_address1, "foo@example.com");
+	gdata_gd_im_address_set_protocol (im_address1, GDATA_GD_IM_PROTOCOL_JABBER);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (im_address1), GDATA_COMPARABLE (im_address2)), !=, 0);
+
+	g_object_unref (im_address2);
+	g_object_unref (im_address1);
 }
 
 static void
@@ -2084,6 +2493,44 @@ test_gd_name_empty_strings (void)
 }
 
 static void
+test_gd_name_comparison (void)
+{
+	GDataGDName *name1, *name2;
+
+	/* Names are only equal if the given, additional and family names are all equal, and the prefixes are equal too. */
+	name1 = gdata_gd_name_new ("Given", "Family");
+	gdata_gd_name_set_additional_name (name1, "Additional");
+	gdata_gd_name_set_prefix (name1, "Mrs");
+	name2 = gdata_gd_name_new ("Given", "Family");
+	gdata_gd_name_set_additional_name (name2, "Additional");
+	gdata_gd_name_set_prefix (name2, "Mrs");
+
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (name1), GDATA_COMPARABLE (name2)), ==, 0);
+
+	/* Different given names. */
+	gdata_gd_name_set_given_name (name1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (name1), GDATA_COMPARABLE (name2)), !=, 0);
+
+	/* Different additional names. */
+	gdata_gd_name_set_given_name (name1, "Given");
+	gdata_gd_name_set_additional_name (name1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (name1), GDATA_COMPARABLE (name2)), !=, 0);
+
+	/* Different family names. */
+	gdata_gd_name_set_additional_name (name1, "Additional");
+	gdata_gd_name_set_family_name (name1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (name1), GDATA_COMPARABLE (name2)), !=, 0);
+
+	/* Different prefixes. */
+	gdata_gd_name_set_family_name (name1, "Family");
+	gdata_gd_name_set_prefix (name1, "Mr");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (name1), GDATA_COMPARABLE (name2)), !=, 0);
+
+	g_object_unref (name2);
+	g_object_unref (name1);
+}
+
+static void
 test_gd_organization (void)
 {
 	GDataGDOrganization *org, *org2;
@@ -2191,6 +2638,37 @@ test_gd_organization_escaping (void)
 }
 
 static void
+test_gd_organization_comparison (void)
+{
+	GDataGDOrganization *org1, *org2;
+
+	/* Organisation positions are equal if the name, title and department are all equal. */
+	org1 = gdata_gd_organization_new ("Name", "Title", NULL, NULL, TRUE);
+	gdata_gd_organization_set_department (org1, "Department");
+	org2 = gdata_gd_organization_new ("Name", "Title", NULL, "label", FALSE);
+	gdata_gd_organization_set_department (org2, "Department");
+
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (org1), GDATA_COMPARABLE (org2)), ==, 0);
+
+	/* Different name. */
+	gdata_gd_organization_set_name (org1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (org1), GDATA_COMPARABLE (org2)), !=, 0);
+
+	/* Different title. */
+	gdata_gd_organization_set_name (org1, "Name");
+	gdata_gd_organization_set_title (org1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (org1), GDATA_COMPARABLE (org2)), !=, 0);
+
+	/* Different department. */
+	gdata_gd_organization_set_title (org1, "Title");
+	gdata_gd_organization_set_department (org1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (org1), GDATA_COMPARABLE (org2)), !=, 0);
+
+	g_object_unref (org2);
+	g_object_unref (org1);
+}
+
+static void
 test_gd_phone_number (void)
 {
 	GDataGDPhoneNumber *phone, *phone2;
@@ -2217,6 +2695,7 @@ test_gd_phone_number (void)
 
 	/* …and a different one */
 	gdata_gd_phone_number_set_number (phone2, "+1 206 555 1212 666");
+	gdata_gd_phone_number_set_uri (phone2, NULL);
 	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone), GDATA_COMPARABLE (phone2)), !=, 0);
 	g_object_unref (phone2);
 
@@ -2269,6 +2748,43 @@ test_gd_phone_number_escaping (void)
 	                                 "uri='tel:+012345678954?foo&amp;bar' rel='http://schemas.google.com/g/2005#work_mobile?foo&amp;bar' "
 	                                 "label='Personal &amp; Private' primary='true'>0123456789 &lt;54&gt;</gd:phoneNumber>");
 	g_object_unref (phone);
+}
+
+static void
+test_gd_phone_number_comparison (void)
+{
+	GDataGDPhoneNumber *phone1, *phone2;
+
+	/* Phone numbers are equal if the number or the URI matches (NULL URIs cannot match). */
+	phone1 = gdata_gd_phone_number_new ("123", NULL, NULL, "phone://123", TRUE);
+	phone2 = gdata_gd_phone_number_new ("123", NULL, "label", "phone://123", FALSE);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone1), GDATA_COMPARABLE (phone2)), ==, 0);
+
+	/* Same numbers, different URIs. */
+	gdata_gd_phone_number_set_uri (phone1, "phone://+44123");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone1), GDATA_COMPARABLE (phone2)), ==, 0);
+
+	/* Different numbers, same URIs. */
+	gdata_gd_phone_number_set_uri (phone1, "phone://123");
+	gdata_gd_phone_number_set_number (phone1, "+44123");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone1), GDATA_COMPARABLE (phone2)), ==, 0);
+
+	/* Different numbers and URIs. */
+	gdata_gd_phone_number_set_number (phone1, "456");
+	gdata_gd_phone_number_set_uri (phone1, "phone://456");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone1), GDATA_COMPARABLE (phone2)), !=, 0);
+
+	/* Different numbers, NULL URIs. */
+	gdata_gd_phone_number_set_uri (phone1, NULL);
+	gdata_gd_phone_number_set_uri (phone2, NULL);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone1), GDATA_COMPARABLE (phone2)), !=, 0);
+
+	/* Same numbers, NULL URIs. */
+	gdata_gd_phone_number_set_number (phone1, "123");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (phone1), GDATA_COMPARABLE (phone2)), ==, 0);
+
+	g_object_unref (phone2);
+	g_object_unref (phone1);
 }
 
 static void
@@ -2393,6 +2909,48 @@ test_gd_postal_address_escaping (void)
 }
 
 static void
+test_gd_postal_address_comparison (void)
+{
+	GDataGDPostalAddress *address1, *address2;
+
+	/* Postal addresses compare equal if the street, city, PO box and postcode are all equal. */
+	address1 = gdata_gd_postal_address_new (NULL, NULL, TRUE);
+	gdata_gd_postal_address_set_street (address1, "Street");
+	gdata_gd_postal_address_set_city (address1, "City");
+	gdata_gd_postal_address_set_po_box (address1, "PO box");
+	gdata_gd_postal_address_set_postcode (address1, "Postcode");
+	address2 = gdata_gd_postal_address_new (NULL, "label", FALSE);
+	gdata_gd_postal_address_set_street (address2, "Street");
+	gdata_gd_postal_address_set_city (address2, "City");
+	gdata_gd_postal_address_set_po_box (address2, "PO box");
+	gdata_gd_postal_address_set_postcode (address2, "Postcode");
+
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (address1), GDATA_COMPARABLE (address2)), ==, 0);
+
+	/* Different streets. */
+	gdata_gd_postal_address_set_street (address1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (address1), GDATA_COMPARABLE (address2)), !=, 0);
+
+	/* Different cities. */
+	gdata_gd_postal_address_set_street (address1, "Street");
+	gdata_gd_postal_address_set_city (address1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (address1), GDATA_COMPARABLE (address2)), !=, 0);
+
+	/* Different PO box. */
+	gdata_gd_postal_address_set_city (address1, "City");
+	gdata_gd_postal_address_set_po_box (address1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (address1), GDATA_COMPARABLE (address2)), !=, 0);
+
+	/* Different postcode. */
+	gdata_gd_postal_address_set_po_box (address1, "PO box");
+	gdata_gd_postal_address_set_postcode (address1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (address1), GDATA_COMPARABLE (address2)), !=, 0);
+
+	g_object_unref (address2);
+	g_object_unref (address1);
+}
+
+static void
 test_gd_reminder (void)
 {
 	GDataGDReminder *reminder, *reminder2;
@@ -2486,6 +3044,40 @@ test_gd_reminder_escaping (void)
 	                 "<gd:reminder xmlns='http://www.w3.org/2005/Atom' xmlns:gd='http://schemas.google.com/g/2005' "
 	                              "minutes='15' method='alert?foo&amp;bar'/>");
 	g_object_unref (reminder);
+}
+
+static void
+test_gd_reminder_comparison (void)
+{
+	GDataGDReminder *reminder1, *reminder2;
+
+#define ASSERT_COMPARISON(op) \
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (reminder1), GDATA_COMPARABLE (reminder2)), op, 0)
+
+	/* Check for equality. */
+	reminder1 = gdata_gd_reminder_new (GDATA_GD_REMINDER_ALERT, -1, 15);
+	reminder2 = gdata_gd_reminder_new (GDATA_GD_REMINDER_ALERT, -1, 15);
+	ASSERT_COMPARISON(==);
+
+	/* Different methods, same time type, same time. */
+	gdata_gd_reminder_set_method (reminder1, GDATA_GD_REMINDER_SMS);
+	ASSERT_COMPARISON(>);
+
+	/* Same method, different time type, same time. */
+	gdata_gd_reminder_set_method (reminder1, GDATA_GD_REMINDER_ALERT);
+	gdata_gd_reminder_set_relative_time (reminder1, -1);
+	gdata_gd_reminder_set_absolute_time (reminder1, 5);
+	ASSERT_COMPARISON(>);
+
+	/* Same method, same time type, different time. */
+	gdata_gd_reminder_set_absolute_time (reminder1, -1);
+	gdata_gd_reminder_set_relative_time (reminder1, 20);
+	ASSERT_COMPARISON(>);
+
+	g_object_unref (reminder2);
+	g_object_unref (reminder1);
+
+#undef ASSERT_COMPARISON
 }
 
 static void
@@ -2591,6 +3183,35 @@ test_gd_when_escaping (void)
 }
 
 static void
+test_gd_when_comparison (void)
+{
+	GDataGDWhen *when1, *when2;
+
+	/* Whens are non-equal if one is a date and the other isn't, if their start times differ, or if their end times differ. */
+	when1 = gdata_gd_when_new (0, 1000, FALSE);
+	when2 = gdata_gd_when_new (0, 1000, FALSE);
+
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (when1), GDATA_COMPARABLE (when2)), ==, 0);
+
+	/* Different date/time type. */
+	gdata_gd_when_set_is_date (when1, TRUE);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (when1), GDATA_COMPARABLE (when2)), !=, 0);
+
+	/* Different start time. */
+	gdata_gd_when_set_is_date (when1, FALSE);
+	gdata_gd_when_set_start_time (when1, 500);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (when1), GDATA_COMPARABLE (when2)), !=, 0);
+
+	/* Different end time. */
+	gdata_gd_when_set_start_time (when1, 0);
+	gdata_gd_when_set_end_time (when1, 15000);
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (when1), GDATA_COMPARABLE (when2)), !=, 0);
+
+	g_object_unref (when2);
+	g_object_unref (when1);
+}
+
+static void
 test_gd_where (void)
 {
 	GDataGDWhere *where, *where2;
@@ -2662,6 +3283,29 @@ test_gd_where_escaping (void)
 }
 
 static void
+test_gd_where_comparison (void)
+{
+	GDataGDWhere *where1, *where2;
+
+	/* Wheres differ if their value or their label differs. */
+	where1 = gdata_gd_where_new (NULL, "Value", "Label");
+	where2 = gdata_gd_where_new (GDATA_GD_WHERE_EVENT, "Value", "Label");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (where1), GDATA_COMPARABLE (where2)), ==, 0);
+
+	/* Different values. */
+	gdata_gd_where_set_value_string (where1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (where1), GDATA_COMPARABLE (where2)), !=, 0);
+
+	/* Different labels. */
+	gdata_gd_where_set_value_string (where1, "Value");
+	gdata_gd_where_set_label (where1, "Different");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (where1), GDATA_COMPARABLE (where2)), !=, 0);
+
+	g_object_unref (where2);
+	g_object_unref (where1);
+}
+
+static void
 test_gd_who (void)
 {
 	GDataGDWho *who, *who2;
@@ -2728,6 +3372,29 @@ test_gd_who_escaping (void)
 	                         "email='John Smith &lt;john.smith@gmail.com&gt;' rel='http://schemas.google.com/g/2005#event.attendee?foo&amp;bar' "
 	                         "valueString='Value string &amp; stuff!'/>");
 	g_object_unref (who);
+}
+
+static void
+test_gd_who_comparison (void)
+{
+	GDataGDWho *who1, *who2;
+
+	/* Whos differ if their value strings or e-mail addresses differ. */
+	who1 = gdata_gd_who_new (NULL, "Jo Bloggs", "email@address");
+	who2 = gdata_gd_who_new (GDATA_GD_WHO_EVENT_ATTENDEE, "Jo Bloggs", "email@address"); /* who knew indeed? */
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (who1), GDATA_COMPARABLE (who2)), ==, 0);
+
+	/* Different value strings. */
+	gdata_gd_who_set_value_string (who1, "Bridget Smith");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (who1), GDATA_COMPARABLE (who2)), !=, 0);
+
+	/* Different e-mail addresses. */
+	gdata_gd_who_set_value_string (who1, "Jo Bloggs");
+	gdata_gd_who_set_email_address (who1, "foo@example.com");
+	g_assert_cmpint (gdata_comparable_compare (GDATA_COMPARABLE (who1), GDATA_COMPARABLE (who2)), !=, 0);
+
+	g_object_unref (who2);
+	g_object_unref (who1);
 }
 
 static void
@@ -3794,8 +4461,11 @@ main (int argc, char *argv[])
 	g_test_add_func ("/service/locale", test_service_locale);
 
 	g_test_add_func ("/entry/get_xml", test_entry_get_xml);
+	g_test_add_func ("/entry/get_json", test_entry_get_json);
 	g_test_add_func ("/entry/parse_xml", test_entry_parse_xml);
-	g_test_add_func ("/entry/error_handling", test_entry_error_handling);
+	g_test_add_func ("/entry/parse_json", test_entry_parse_json);
+	g_test_add_func ("/entry/error_handling/xml", test_entry_error_handling_xml);
+	g_test_add_func ("/entry/error_handling/json", test_entry_error_handling_json);
 	g_test_add_func ("/entry/escaping", test_entry_escaping);
 	g_test_add_func ("/entry/links/remove", test_entry_links_remove);
 
@@ -3804,6 +4474,10 @@ main (int argc, char *argv[])
 	g_test_add_func ("/feed/escaping", test_feed_escaping);
 
 	g_test_add_func ("/query/categories", test_query_categories);
+	g_test_add_func ("/query/dates", test_query_dates);
+	g_test_add_func ("/query/strict", test_query_strict);
+	g_test_add_func ("/query/pagination", test_query_pagination);
+	g_test_add_func ("/query/properties", test_query_properties);
 	g_test_add_func ("/query/unicode", test_query_unicode);
 	g_test_add_func ("/query/etag", test_query_etag);
 
@@ -3832,24 +4506,34 @@ main (int argc, char *argv[])
 
 	g_test_add_func ("/gd/email_address", test_gd_email_address);
 	g_test_add_func ("/gd/email_address/escaping", test_gd_email_address_escaping);
+	g_test_add_func ("/gd/email_address/comparison", test_gd_email_address_comparison);
 	g_test_add_func ("/gd/im_address", test_gd_im_address);
 	g_test_add_func ("/gd/im_address/escaping", test_gd_im_address_escaping);
+	g_test_add_func ("/gd/im_address/comparison", test_gd_im_address_comparison);
 	g_test_add_func ("/gd/name", test_gd_name);
 	g_test_add_func ("/gd/name/empty_strings", test_gd_name_empty_strings);
+	g_test_add_func ("/gd/name/comparison", test_gd_name_comparison);
 	g_test_add_func ("/gd/organization", test_gd_organization);
 	g_test_add_func ("/gd/organization/escaping", test_gd_organization_escaping);
+	g_test_add_func ("/gd/organization/comparison", test_gd_organization_comparison);
 	g_test_add_func ("/gd/phone_number", test_gd_phone_number);
 	g_test_add_func ("/gd/phone_number/escaping", test_gd_phone_number_escaping);
+	g_test_add_func ("/gd/phone_number/comparison", test_gd_phone_number_comparison);
 	g_test_add_func ("/gd/postal_address", test_gd_postal_address);
 	g_test_add_func ("/gd/postal_address/escaping", test_gd_postal_address_escaping);
+	g_test_add_func ("/gd/postal_address/comparison", test_gd_postal_address_comparison);
 	g_test_add_func ("/gd/reminder", test_gd_reminder);
 	g_test_add_func ("/gd/reminder/escaping", test_gd_reminder_escaping);
+	g_test_add_func ("/gd/reminder/comparison", test_gd_reminder_comparison);
 	g_test_add_func ("/gd/when", test_gd_when);
 	g_test_add_func ("/gd/when/escaping", test_gd_when_escaping);
+	g_test_add_func ("/gd/when/comparison", test_gd_when_comparison);
 	g_test_add_func ("/gd/where", test_gd_where);
 	g_test_add_func ("/gd/where/escaping", test_gd_where_escaping);
+	g_test_add_func ("/gd/where/comparison", test_gd_where_comparison);
 	g_test_add_func ("/gd/who", test_gd_who);
 	g_test_add_func ("/gd/who/escaping", test_gd_who_escaping);
+	g_test_add_func ("/gd/who/comparison", test_gd_who_comparison);
 
 	g_test_add_func ("/media/category", test_media_category);
 	g_test_add_func ("/media/category/escaping", test_media_category_escaping);

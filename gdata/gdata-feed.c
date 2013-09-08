@@ -118,7 +118,7 @@ gdata_feed_class_init (GDataFeedClass *klass)
 
 	parsable_class->parse_json = parse_json;
 	parsable_class->post_parse_json = post_parse_json;
-	
+
 	/**
 	 * GDataFeed:title:
 	 *
@@ -594,22 +594,24 @@ get_namespaces (GDataParsable *parsable, GHashTable *namespaces)
 static gboolean
 parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error)
 {
-	guint i;
 	GDataFeed *self = GDATA_FEED (parsable);
 	ParseData *data = user_data;
-	
-	if (!strcmp (json_reader_get_member_name (reader), "items")) {
-		// loop trough elements array
-		for (i = 0; i < json_reader_count_elements (reader); i++) {
-			json_reader_read_element (reader, i);
-			
+
+	if (g_strcmp0 (json_reader_get_member_name (reader), "items") == 0) {
+		gint i, elements;
+
+		/* Loop through the elements array. */
+		for (i = 0, elements = json_reader_count_elements (reader); i < elements; i++) {
 			GDataEntry *entry;
 			GType entry_type;
+
+			json_reader_read_element (reader, i);
 
 			/* Allow @data to be %NULL, and assume we're parsing a vanilla feed, so that we can test #GDataFeed in tests/general.c.
 			 * A little hacky, but not too much so, and valuable for testing. */
 			entry_type = (data != NULL) ? data->entry_type : GDATA_TYPE_ENTRY;
-			// passing reader cursor to object 
+
+			/* Parse the node, passing it the reader cursor. */
 			entry = GDATA_ENTRY (_gdata_parsable_new_from_json_node (entry_type, reader, NULL, error));
 			if (entry == NULL)
 				return FALSE;
@@ -619,11 +621,10 @@ parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GEr
 				_gdata_feed_call_progress_callback (self, data, entry);
 			_gdata_feed_add_entry (self, entry);
 			g_object_unref (entry);
-			
+
 			json_reader_end_element (reader);
 		}
-	}
-	else {
+	} else {
 		return GDATA_PARSABLE_CLASS (gdata_feed_parent_class)->parse_json (parsable, reader, user_data, error);
 	}
 
@@ -635,11 +636,8 @@ post_parse_json (GDataParsable *parsable, gpointer user_data, GError **error)
 {
 	GDataFeedPrivate *priv = GDATA_FEED (parsable)->priv;
 
-	/* Reverse our lists of stuff */
+	/* Reverse our lists of stuff. */
 	priv->entries = g_list_reverse (priv->entries);
-	priv->categories = g_list_reverse (priv->categories);
-	priv->links = g_list_reverse (priv->links);
-	priv->authors = g_list_reverse (priv->authors);
 
 	return TRUE;
 }
