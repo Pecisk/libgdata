@@ -1350,6 +1350,7 @@ gdata_service_insert_entry (GDataService *self, GDataAuthorizationDomain *domain
 	SoupMessage *message;
 	gchar *upload_data;
 	guint status;
+	GDataParsableClass *klass;
 
 	g_return_val_if_fail (GDATA_IS_SERVICE (self), NULL);
 	g_return_val_if_fail (domain == NULL || GDATA_IS_AUTHORIZATION_DOMAIN (domain), NULL);
@@ -1367,8 +1368,14 @@ gdata_service_insert_entry (GDataService *self, GDataAuthorizationDomain *domain
 	message = _gdata_service_build_message (self, domain, SOUP_METHOD_POST, upload_uri, NULL, FALSE);
 
 	/* Append the data */
-	upload_data = gdata_parsable_get_xml (GDATA_PARSABLE (entry));
-	soup_message_set_request (message, "application/atom+xml", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
+	klass = GDATA_PARSABLE_GET_CLASS (entry);
+	if (!g_strcmp0 (klass->get_content_type (), "application/json")) {
+		upload_data = gdata_parsable_get_json (GDATA_PARSABLE (entry));
+		soup_message_set_request (message, "application/json", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
+	} else {
+		upload_data = gdata_parsable_get_xml (GDATA_PARSABLE (entry));
+		soup_message_set_request (message, "application/atom+xml", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
+	}
 
 	/* Send the message */
 	status = _gdata_service_send_message (self, message, cancellable, error);
@@ -1541,7 +1548,8 @@ gdata_service_update_entry (GDataService *self, GDataAuthorizationDomain *domain
 	SoupMessage *message;
 	gchar *upload_data;
 	guint status;
-
+	GDataParsableClass *klass;
+	
 	g_return_val_if_fail (GDATA_IS_SERVICE (self), NULL);
 	g_return_val_if_fail (domain == NULL || GDATA_IS_AUTHORIZATION_DOMAIN (domain), NULL);
 	g_return_val_if_fail (GDATA_IS_ENTRY (entry), NULL);
@@ -1554,8 +1562,14 @@ gdata_service_update_entry (GDataService *self, GDataAuthorizationDomain *domain
 	message = _gdata_service_build_message (self, domain, SOUP_METHOD_PUT, gdata_link_get_uri (_link), gdata_entry_get_etag (entry), TRUE);
 
 	/* Append the data */
-	upload_data = gdata_parsable_get_xml (GDATA_PARSABLE (entry));
-	soup_message_set_request (message, "application/atom+xml", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
+	klass = GDATA_PARSABLE_GET_CLASS (entry);
+	if (!g_strcmp0 (klass->get_content_type (), "application/json")) {
+		upload_data = gdata_parsable_get_json (GDATA_PARSABLE (entry));
+		soup_message_set_request (message, "application/json", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
+	} else {
+		upload_data = gdata_parsable_get_xml (GDATA_PARSABLE (entry));
+		soup_message_set_request (message, "application/atom+xml", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
+	}
 
 	/* Send the message */
 	status = _gdata_service_send_message (self, message, cancellable, error);
