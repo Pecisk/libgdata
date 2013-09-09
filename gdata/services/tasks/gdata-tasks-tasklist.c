@@ -48,6 +48,7 @@ static GObject *gdata_tasks_tasklist_constructor (GType type, guint n_construct_
 static void gdata_tasks_tasklist_finalize (GObject *object);
 static void get_json (GDataParsable *parsable, JsonBuilder *builder);
 static gboolean parse_json (GDataParsable *parsable, JsonReader *node, gpointer user_data, GError **error);
+static const gchar *get_content_type (void);
 
 G_DEFINE_TYPE (GDataTasksTasklist, gdata_tasks_tasklist, GDATA_TYPE_ENTRY)
 
@@ -62,6 +63,7 @@ gdata_tasks_tasklist_class_init (GDataTasksTasklistClass *klass)
 
 	parsable_class->parse_json = parse_json;
 	parsable_class->get_json = get_json;
+	parsable_class->get_content_type = get_content_type;
 }
 
 static void
@@ -102,6 +104,9 @@ get_json (GDataParsable *parsable, JsonBuilder *builder)
 	GDATA_PARSABLE_CLASS (gdata_tasks_tasklist_parent_class)->get_json (parsable, builder);
 }
 
+static const gchar * get_content_type (void) {
+	return "application/json";	
+}
 
 /**
  * gdata_tasks_tasklist_new:

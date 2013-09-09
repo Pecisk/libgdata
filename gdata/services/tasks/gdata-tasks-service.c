@@ -349,7 +349,7 @@ gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTaskli
  * Since: UNRELEASED
  **/
 GDataTasksTask *
-gdata_tasks_service_insert_task (GDataTaskService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
+gdata_tasks_service_insert_task (GDataTasksService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
 {
 	gchar *uri;
 	GDataEntry *entry;
@@ -388,7 +388,7 @@ gdata_tasks_service_insert_task (GDataTaskService *self, GDataTasksTask *task, G
  * Since: UNRELEASED
  **/
 void
-gdata_tasks_service_insert_task_async (GDataCalendarService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable,
+gdata_tasks_service_insert_task_async (GDataTasksService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable,
                                            GAsyncReadyCallback callback, gpointer user_data)
 {
 	gchar *uri;
@@ -419,8 +419,8 @@ gdata_tasks_service_insert_task_async (GDataCalendarService *self, GDataTasksTas
  *
  * Since: UNRELEASED
  **/
-GDataTasksTask *
-gdata_tasks_service_insert_tasklist (GDataTaskService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
+GDataTasksTasklist *
+gdata_tasks_service_insert_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
 {
 	gchar *uri;
 	GDataEntry *entry;
@@ -457,13 +457,12 @@ gdata_tasks_service_insert_tasklist (GDataTaskService *self, GDataTasksTasklist 
  * Since: UNRELEASED
  **/
 void
-gdata_tasks_service_insert_tasklist_async (GDataCalendarService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable,
+gdata_tasks_service_insert_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable,
                                            GAsyncReadyCallback callback, gpointer user_data)
 {
 	gchar *uri;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
-	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
 	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 

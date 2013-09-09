@@ -53,6 +53,7 @@ static void gdata_parsable_set_property (GObject *object, guint property_id, con
 static void gdata_parsable_finalize (GObject *object);
 static gboolean real_parse_xml (GDataParsable *parsable, xmlDoc *doc, xmlNode *node, gpointer user_data, GError **error);
 static gboolean real_parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
+static const gchar *get_content_type (void);
 
 struct _GDataParsablePrivate {
 	/* XML stuff. */
@@ -83,6 +84,7 @@ gdata_parsable_class_init (GDataParsableClass *klass)
 	gobject_class->finalize = gdata_parsable_finalize;
 	klass->parse_xml = real_parse_xml;
 	klass->parse_json = real_parse_json;
+	klass->get_content_type = get_content_type;
 
 	/**
 	 * GDataParsable:constructed-from-xml:
@@ -275,6 +277,10 @@ real_parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data
 	return TRUE;
 }
 
+static const gchar *
+get_content_type (void) {
+	return "application/xml";
+}
 /**
  * gdata_parsable_new_from_xml:
  * @parsable_type: the type of the class represented by the XML

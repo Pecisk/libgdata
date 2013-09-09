@@ -50,6 +50,7 @@ static void gdata_tasks_task_get_property (GObject *object, guint property_id, G
 static void gdata_tasks_task_set_property (GObject *object, guint property_id, const GValue *value, GParamSpec *pspec);
 static void get_json (GDataParsable *parsable, JsonBuilder *builder);
 static gboolean parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data, GError **error);
+static const gchar *get_content_type (void);
 
 struct _GDataTasksTaskPrivate {
 	gchar *parent;
@@ -91,6 +92,7 @@ gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 
 	parsable_class->parse_json = parse_json;
 	parsable_class->get_json = get_json;
+	parsable_class->get_content_type = get_content_type;
 
 	/**
 	 * GDataTasksTask:parent:
@@ -371,6 +373,11 @@ get_json (GDataParsable *parsable, JsonBuilder *builder)
 		json_builder_set_member_name (builder, "deleted");
 		json_builder_add_string_value (builder, "False");
 	}
+}
+
+static const gchar *
+get_content_type (void) {
+	return "application/json";	
 }
 
 /**
