@@ -279,7 +279,7 @@ real_parse_json (GDataParsable *parsable, JsonReader *reader, gpointer user_data
 
 static const gchar *
 get_content_type (void) {
-	return "application/xml";
+	return "application/atom+xml";
 }
 /**
  * gdata_parsable_new_from_xml:

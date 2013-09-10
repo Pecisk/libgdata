@@ -1369,7 +1369,8 @@ gdata_service_insert_entry (GDataService *self, GDataAuthorizationDomain *domain
 
 	/* Append the data */
 	klass = GDATA_PARSABLE_GET_CLASS (entry);
-	if (!g_strcmp0 (klass->get_content_type (), "application/json")) {
+	g_assert (klass->get_content_type != NULL);
+	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
 		upload_data = gdata_parsable_get_json (GDATA_PARSABLE (entry));
 		soup_message_set_request (message, "application/json", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
 	} else {
@@ -1563,7 +1564,8 @@ gdata_service_update_entry (GDataService *self, GDataAuthorizationDomain *domain
 
 	/* Append the data */
 	klass = GDATA_PARSABLE_GET_CLASS (entry);
-	if (!g_strcmp0 (klass->get_content_type (), "application/json")) {
+	g_assert (klass->get_content_type != NULL);
+	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
 		upload_data = gdata_parsable_get_json (GDATA_PARSABLE (entry));
 		soup_message_set_request (message, "application/json", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
 	} else {

@@ -367,11 +367,11 @@ get_json (GDataParsable *parsable, JsonBuilder *builder)
 
 	if(priv->deleted == TRUE) {
 		json_builder_set_member_name (builder, "deleted");
-		json_builder_add_string_value (builder, "True");
+		json_builder_add_boolean_value (builder, TRUE);
 	}
 	else {
 		json_builder_set_member_name (builder, "deleted");
-		json_builder_add_string_value (builder, "False");
+		json_builder_add_boolean_value (builder, FALSE);
 	}
 }
 
