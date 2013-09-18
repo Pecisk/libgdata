@@ -376,10 +376,10 @@ gdata_tasks_service_insert_task (GDataTasksService *self, GDataTasksTask *task, 
  * @callback: a #GAsyncReadyCallback to call when insertion is finished
  * @user_data: (closure): data to pass to the @callback function
  *
- * Inserts @task by uploading it to the online tasks service into tasklist @tasklist. @self and @event are both reffed when this function is called, so can safely be
+ * Inserts @task by uploading it to the online tasks service into tasklist @tasklist. @self and @task are both reffed when this function is called, so can safely be
  * unreffed after this function returns.
  *
- * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTask representing the inserted event and to check for possible
+ * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTask representing the inserted task and to check for possible
  * errors.
  *
  * For more details, see gdata_task_service_insert_event(), which is the synchronous version of this function, and
@@ -445,10 +445,10 @@ gdata_tasks_service_insert_tasklist (GDataTasksService *self, GDataTasksTasklist
  * @callback: a #GAsyncReadyCallback to call when insertion is finished
  * @user_data: (closure): data to pass to the @callback function
  *
- * Inserts @tasklist by uploading it to the online tasks service. @self and @event are both reffed when this function is called, so can safely be
+ * Inserts @tasklist by uploading it to the online tasks service. @self and @tasklist are both reffed when this function is called, so can safely be
  * unreffed after this function returns.
  *
- * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTasklist representing the inserted event and to check for possible
+ * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTasklist representing the inserted tasklist and to check for possible
  * errors.
  *
  * For more details, see gdata_task_service_insert_event(), which is the synchronous version of this function, and
@@ -470,4 +470,237 @@ gdata_tasks_service_insert_tasklist_async (GDataTasksService *self, GDataTasksTa
 	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (tasklist), cancellable,
 	                                  callback, user_data);
 	g_free (uri);
+}
+
+/**
+ * gdata_tasks_service_delete_task:
+ * @self: a #GDataTasksService
+ * @task: the #GDataTasksTask to delete
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @error: (allow-none): a #GError, or %NULL
+ *
+ * Delete @task from online tasks service.
+ *
+ * For more details, see gdata_service_delete_entry().
+ *
+ * Return value: %TRUE on success, %FALSE otherwise	
+ *
+ * Since: UNRELEASED
+ */
+gboolean
+gdata_tasks_service_delete_task (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable, GError **error)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	return gdata_service_delete_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable, error);
+}
+
+/**
+ * gdata_tasks_service_delete_task_async:
+ * @self: a #GDataTasksService
+ * @task: #GDataTasksTask to delete
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when insertion is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Deletes @task from online tasks service. @self and @task are both reffed when this function is called, so can safely be
+ * unreffed after this function returns.
+ *
+ * @callback should call gdata_service_insert_entry_finish() to finish deleting task and to check for possible
+ * errors.
+ *
+ * For more details, see gdata_task_service_delete_task(), which is the synchronous version of this function, and
+ * gdata_service_delete_entry_async(), which is the base asynchronous insertion function.
+ *
+ * Since: UNRELEASED
+ */
+void
+gdata_tasks_service_delete_task_async (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+	gdata_service_delete_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable,
+	                                  callback, user_data);
+}
+
+/**
+ * gdata_tasks_service_delete_tasklist:
+ * @self: a #GDataTasksService
+ * @tasklist: the #GDataTasksTasklist to delete
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @error: (allow-none): a #GError, or %NULL
+ *
+ * Delete @tasklist from online tasks service.
+ *
+ * For more details, see gdata_service_delete_entry().
+ *
+ * Return value: %TRUE on success, %FALSE otherwise	
+ *
+ * Since: UNRELEASED
+ */
+gboolean
+gdata_tasks_service_delete_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	return gdata_service_delete_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable, error);
+}
+
+/**
+ * gdata_tasks_service_delete_tasklist_async:
+ * @self: a #GDataTasksService
+ * @tasklist: #GDataTasksTasklist to delete
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when insertion is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Deletes @tasklist from online tasks service. @self and @tasklist are both reffed when this function is called, so can safely be
+ * unreffed after this function returns.
+ *
+ * @callback should call gdata_service_insert_entry_finish() to finish deleting tasklist and to check for possible
+ * errors.
+ *
+ * For more details, see gdata_task_service_delete_tasklist(), which is the synchronous version of this function, and
+ * gdata_service_delete_entry_async(), which is the base asynchronous insertion function.
+ *
+ * Since: UNRELEASED
+ */
+void
+gdata_tasks_service_delete_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+	gdata_service_delete_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable,
+	                                  callback, user_data);
+}
+
+
+/**
+ * gdata_tasks_service_update_task:
+ * @self: a #GDataTasksService
+ * @task: the #GDataTasksTask to update
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @error: (allow-none): a #GError, or %NULL
+ *
+ * Update @task in online tasks service.
+ *
+ * For more details, see gdata_service_delete_entry().
+ *
+ * Return value: (transfer full): an updated #GDataTasksTask, or %NULL; unref with g_object_unref()
+ *
+ * Since: UNRELEASED
+ */
+GDataTasksTask *
+gdata_tasks_service_update_task (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable, GError **error)
+{
+	GDataEntry *entry;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	return gdata_service_delete_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable, error);
+}
+
+/**
+ * gdata_tasks_service_update_task_async:
+ * @self: a #GDataTasksService
+ * @task: #GDataTasksTask to update
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when insertion is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Updates @task to online tasks service. @self and @task are both reffed when this function is called, so can safely be
+ * unreffed after this function returns.
+ *
+ * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTask representing the updated task and to check for possible
+ * errors.
+ *
+ * For more details, see gdata_task_service_update_task(), which is the synchronous version of this function, and
+ * gdata_service_update_entry_async(), which is the base asynchronous insertion function.
+ *
+ * Since: UNRELEASED
+ */
+void
+gdata_tasks_service_update_task_async (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+	gdata_service_update_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable,
+	                                  callback, user_data);
+}
+
+/**
+ * gdata_tasks_service_update_tasklist:
+ * @self: a #GDataTasksService
+ * @tasklist: the #GDataTasksTasklist to update
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @error: (allow-none): a #GError, or %NULL
+ *
+ * Update @tasklist in online tasks service.
+ *
+ * For more details, see gdata_service_delete_entry().
+ *
+ * Return value: %TRUE on success, %FALSE otherwise	
+ *
+ * Since: UNRELEASED
+ */
+GDataTasksTasklist *
+gdata_tasks_service_update_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
+{
+	GDataEntry *entry;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	return gdata_service_delete_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable, error);
+}
+
+/**
+ * gdata_tasks_service_update_tasklist_async:
+ * @self: a #GDataTasksService
+ * @tasklist: #GDataTasksTasklist to update
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @callback: a #GAsyncReadyCallback to call when insertion is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Updates @tasklist from online tasks service. @self and @tasklist are both reffed when this function is called, so can safely be
+ * unreffed after this function returns.
+ *
+ * @callback should call gdata_service_update_entry_finish() to obtain a #GDataTasksTasklist representing the updated task and to check for possible
+ * errors.
+ *
+ * For more details, see gdata_task_service_update_tasklist(), which is the synchronous version of this function, and
+ * gdata_service_update_entry_async(), which is the base asynchronous insertion function.
+ *
+ * Since: UNRELEASED
+ */
+void
+gdata_tasks_service_update_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+	gdata_service_update_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable,
+	                                  callback, user_data);
 }

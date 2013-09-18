@@ -1557,18 +1557,22 @@ gdata_service_update_entry (GDataService *self, GDataAuthorizationDomain *domain
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* Get the edit URI */
-	_link = gdata_entry_look_up_link (entry, GDATA_LINK_EDIT);
-	g_assert (_link != NULL);
-	message = _gdata_service_build_message (self, domain, SOUP_METHOD_PUT, gdata_link_get_uri (_link), gdata_entry_get_etag (entry), TRUE);
 
 	/* Append the data */
 	klass = GDATA_PARSABLE_GET_CLASS (entry);
 	g_assert (klass->get_content_type != NULL);
 	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
+		/* Get the edit URI */
+		_link = gdata_entry_look_up_link (entry, GDATA_LINK_SELF);
+		g_assert (_link != NULL);
+		message = _gdata_service_build_message (self, domain, SOUP_METHOD_PUT, gdata_link_get_uri (_link), gdata_entry_get_etag (entry), TRUE);
 		upload_data = gdata_parsable_get_json (GDATA_PARSABLE (entry));
 		soup_message_set_request (message, "application/json", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
 	} else {
+		/* Get the edit URI */
+		_link = gdata_entry_look_up_link (entry, GDATA_LINK_EDIT);
+		g_assert (_link != NULL);
+		message = _gdata_service_build_message (self, domain, SOUP_METHOD_PUT, gdata_link_get_uri (_link), gdata_entry_get_etag (entry), TRUE);
 		upload_data = gdata_parsable_get_xml (GDATA_PARSABLE (entry));
 		soup_message_set_request (message, "application/atom+xml", SOUP_MEMORY_TAKE, upload_data, strlen (upload_data));
 	}
@@ -1745,7 +1749,15 @@ gdata_service_delete_entry (GDataService *self, GDataAuthorizationDomain *domain
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* Get the edit URI. We have to fix it to always use HTTPS as YouTube videos appear to incorrectly return a HTTP URI as their edit URI. */
-	_link = gdata_entry_look_up_link (entry, GDATA_LINK_EDIT);
+	/* Append the data */
+	
+	klass = GDATA_PARSABLE_GET_CLASS (entry);
+	g_assert (klass->get_content_type != NULL);
+	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
+		_link = gdata_entry_look_up_link (entry, GDATA_LINK_SELF);
+	} else {
+		_link = gdata_entry_look_up_link (entry, GDATA_LINK_EDIT);
+	}
 	g_assert (_link != NULL);
 
 	fixed_uri = _gdata_service_fix_uri_scheme (gdata_link_get_uri (_link));
