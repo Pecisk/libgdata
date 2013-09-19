@@ -79,7 +79,7 @@ get_authorization_domains (void)
  *
  * Return value: a new #GDataTasksService, or %NULL; unref with g_object_unref()
  *
- * Since: UNREALASED
+ * Since: UNRELEASED
  */
 GDataTasksService *
 gdata_tasks_service_new (GDataAuthorizer *authorizer)
@@ -102,7 +102,7 @@ gdata_tasks_service_new (GDataAuthorizer *authorizer)
  *
  * Return value: (transfer none): the service's authorization domain
  * 
- * Since: UNREALASED
+ * Since: UNRELEASED
  */
 GDataAuthorizationDomain *
 gdata_tasks_service_get_primary_authorization_domain (void)
@@ -224,7 +224,7 @@ gdata_tasks_service_query_all_tasklists_async (GDataTasksService *self, GDataQue
  *
  * Return value: (transfer full): a #GDataFeed of query results; unref with g_object_unref()
  * 
- * Since: UNREALASED
+ * Since: UNRELEASED
  */
 GDataFeed *
 gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query, GCancellable *cancellable,
