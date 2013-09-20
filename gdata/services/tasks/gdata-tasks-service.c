@@ -519,7 +519,7 @@ gdata_tasks_service_delete_task (GDataTasksService *self, GDataTasksTask *task, 
  */
 void
 gdata_tasks_service_delete_task_async (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable,
-                                           GAsyncReadyCallback callback, gpointer user_data)
+                                       GAsyncReadyCallback callback, gpointer user_data)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
@@ -612,7 +612,7 @@ gdata_tasks_service_update_task (GDataTasksService *self, GDataTasksTask *task, 
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return gdata_service_delete_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable, error);
+	return gdata_service_update_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable, error);
 }
 
 /**
@@ -671,7 +671,7 @@ gdata_tasks_service_update_tasklist (GDataTasksService *self, GDataTasksTasklist
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return gdata_service_delete_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable, error);
+	return gdata_service_update_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable, error);
 }
 
 /**

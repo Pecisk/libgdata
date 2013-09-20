@@ -1750,7 +1750,7 @@ gdata_service_delete_entry (GDataService *self, GDataAuthorizationDomain *domain
 
 	/* Get the edit URI. We have to fix it to always use HTTPS as YouTube videos appear to incorrectly return a HTTP URI as their edit URI. */
 	/* Append the data */
-	
+
 	klass = GDATA_PARSABLE_GET_CLASS (entry);
 	g_assert (klass->get_content_type != NULL);
 	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
