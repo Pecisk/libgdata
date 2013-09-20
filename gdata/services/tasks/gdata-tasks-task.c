@@ -104,7 +104,7 @@ gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 	                                 g_param_spec_string ("parent",
 	                                                      "Parent of task", "Identifier of parent task.",
 	                                                      NULL,
-	                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+	                                                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	 * GDataTasksTask:position:
@@ -119,7 +119,7 @@ gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 	                                 g_param_spec_string ("position",
 	                                                      "Position of task", "Position of the task among sibling tasks using lexicographical order.",
 	                                                      NULL,
-	                                                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+	                                                      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
 	/**
 	 * GDataTasksTask:notes:
@@ -190,7 +190,7 @@ gdata_tasks_task_class_init (GDataTasksTaskClass *klass)
 	                                 g_param_spec_boolean ("is-hidden",
 	                                                       "Hidden?", "Indicated whatever task is hidden.",
 	                                                       FALSE,
-	                                                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+	                                                       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -277,12 +277,6 @@ gdata_tasks_task_set_property (GObject *object, guint property_id, const GValue 
 	GDataTasksTask *self = GDATA_TASKS_TASK (object);
 
 	switch (property_id) {
-		case PROP_PARENT:
-			gdata_tasks_task_set_parent (self, g_value_get_string (value));
-			break;
-		case PROP_POSITION:
-			gdata_tasks_task_set_position (self, g_value_get_string (value));
-			break;
 		case PROP_NOTES:
 			gdata_tasks_task_set_notes (self, g_value_get_string (value));
 			break;
@@ -298,9 +292,9 @@ gdata_tasks_task_set_property (GObject *object, guint property_id, const GValue 
 		case PROP_DELETED:
 			gdata_tasks_task_set_is_deleted (self, g_value_get_boolean (value));
 			break;
+		case PROP_PARENT:
+		case PROP_POSITION:
 		case PROP_HIDDEN:
-			gdata_tasks_task_set_is_hidden (self, g_value_get_boolean (value));
-			break;
 		default:
 			/* We don't have any other property... */
 			G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -421,27 +415,6 @@ gdata_tasks_task_get_parent (GDataTasksTask *self)
 }
 
 /**
- * gdata_tasks_task_set_parent:
- * @self: a #GDataTasksTask
- * @parent: (allow-none): a new parent of the task, or %NULL
- *
- * Sets the #GDataTasksTask:parent property to the new parent, @parent.
- *
- * Set @parent to %NULL to unset the property in the task.
- *
- * Since: 0.13.4
- */
-void
-gdata_tasks_task_set_parent (GDataTasksTask *self, const gchar *parent)
-{
-	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
-
-	g_free (self->priv->parent);
-	self->priv->parent = g_strdup (parent);
-	g_object_notify (G_OBJECT (self), "parent");
-}
-
-/**
  * gdata_tasks_task_get_position:
  * @self: a #GDataTasksTask
  *
@@ -456,27 +429,6 @@ gdata_tasks_task_get_position (GDataTasksTask *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), NULL);
 	return self->priv->position;
-}
-
-/**
- * gdata_tasks_task_set_position:
- * @self: a #GDataTasksTask
- * @position: (allow-none): a new position of the task, or %NULL
- *
- * Sets the #GDataTasksTask:position property to the new position, @position.
- *
- * Set @position to %NULL to unset the property in the task.
- *
- * Since: 0.13.4
- */
-void
-gdata_tasks_task_set_position (GDataTasksTask *self, const gchar *position)
-{
-	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
-
-	g_free (self->priv->position);
-	self->priv->position = g_strdup (position);
-	g_object_notify (G_OBJECT (self), "position");
 }
 
 /**
@@ -680,21 +632,4 @@ gdata_tasks_task_is_hidden (GDataTasksTask *self)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (self), FALSE);
 	return self->priv->hidden;
-}
-
-/**
- * gdata_tasks_task_set_is_hidden:
- * @self: a #GDataTasksTask
- * @hidden: %TRUE if task is hidden, %FALSE otherwise
- *
- * Sets the #GDataTasksTask:is-hidden property to @hidden.
- * 
- * Since: 0.13.4
- */
-void
-gdata_tasks_task_set_is_hidden (GDataTasksTask *self, gboolean hidden)
-{
-	g_return_if_fail (GDATA_IS_TASKS_TASK (self));
-	self->priv->hidden = hidden;
-	g_object_notify (G_OBJECT (self), "hidden");
 }
