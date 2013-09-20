@@ -248,14 +248,6 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 		return NULL;
 	}
 
-	/* Use the tasklist's content src */
-	uri = gdata_entry_get_content_uri (GDATA_ENTRY (tasklist));
-	if (uri == NULL) {
-		/* Erroring out is probably the safest thing to do */
-		g_set_error_literal (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_PROTOCOL_ERROR,
-		                     _("The tasklist did not have a content URI."));
-		return NULL;
-	}
 	/* Should add /tasks as requested by API */
 	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
 	/* Execute the query */
@@ -605,14 +597,12 @@ gdata_tasks_service_delete_tasklist_async (GDataTasksService *self, GDataTasksTa
 GDataTasksTask *
 gdata_tasks_service_update_task (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable, GError **error)
 {
-	GDataEntry *entry;
-
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return gdata_service_update_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable, error);
+	return GDATA_TASKS_TASK (gdata_service_update_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (task), cancellable, error));
 }
 
 /**
@@ -634,9 +624,9 @@ gdata_tasks_service_update_task (GDataTasksService *self, GDataTasksTask *task, 
  *
  * Since: UNRELEASED
  */
-void
+void 
 gdata_tasks_service_update_task_async (GDataTasksService *self, GDataTasksTask *task, GCancellable *cancellable,
-                                           GAsyncReadyCallback callback, gpointer user_data)
+                                       GAsyncReadyCallback callback, gpointer user_data)
 {
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
@@ -664,14 +654,12 @@ gdata_tasks_service_update_task_async (GDataTasksService *self, GDataTasksTask *
 GDataTasksTasklist *
 gdata_tasks_service_update_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
 {
-	GDataEntry *entry;
-
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return gdata_service_update_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable, error);
+	return GDATA_TASKS_TASKLIST (gdata_service_update_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), GDATA_ENTRY (tasklist), cancellable, error));
 }
 
 /**

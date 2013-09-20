@@ -1385,8 +1385,8 @@ gdata_service_insert_entry (GDataService *self, GDataAuthorizationDomain *domain
 		/* Redirect error or cancelled */
 		g_object_unref (message);
 		return NULL;
-	} else if (status != SOUP_STATUS_CREATED) {
-		/* Error */
+	} else if (status != SOUP_STATUS_CREATED && status != SOUP_STATUS_OK) {
+		/* Error - for XML apis Google returns CREATED and for JSON it returns OK */
 		GDataServiceClass *klass = GDATA_SERVICE_GET_CLASS (self);
 		g_assert (klass->parse_error_response != NULL);
 		klass->parse_error_response (self, GDATA_OPERATION_INSERTION, status, message->reason_phrase, message->response_body->data,
@@ -1395,10 +1395,15 @@ gdata_service_insert_entry (GDataService *self, GDataAuthorizationDomain *domain
 		return NULL;
 	}
 
-	/* Parse the XML; create and return a new GDataEntry of the same type as @entry */
+	/* Parse the XML or JSON according to GDataEntry type; create and return a new GDataEntry of the same type as @entry */
 	g_assert (message->response_body->data != NULL);
-	updated_entry = GDATA_ENTRY (gdata_parsable_new_from_xml (G_OBJECT_TYPE (entry), message->response_body->data, message->response_body->length,
-	                                                          error));
+	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
+		updated_entry = GDATA_ENTRY (gdata_parsable_new_from_json (G_OBJECT_TYPE (entry), message->response_body->data, message->response_body->length,
+		                             error));
+	} else {
+		updated_entry = GDATA_ENTRY (gdata_parsable_new_from_xml (G_OBJECT_TYPE (entry), message->response_body->data, message->response_body->length,
+		                             error));
+	}
 	g_object_unref (message);
 
 	return updated_entry;
@@ -1579,7 +1584,6 @@ gdata_service_update_entry (GDataService *self, GDataAuthorizationDomain *domain
 
 	/* Send the message */
 	status = _gdata_service_send_message (self, message, cancellable, error);
-
 	if (status == SOUP_STATUS_NONE || status == SOUP_STATUS_CANCELLED) {
 		/* Redirect error or cancelled */
 		g_object_unref (message);
@@ -1595,9 +1599,13 @@ gdata_service_update_entry (GDataService *self, GDataAuthorizationDomain *domain
 	}
 
 	/* Parse the XML; create and return a new GDataEntry of the same type as @entry */
-	g_assert (message->response_body->data != NULL);
+	if (g_strcmp0 (klass->get_content_type (), "application/json") == 0) {
+	updated_entry = GDATA_ENTRY (gdata_parsable_new_from_json (G_OBJECT_TYPE (entry), message->response_body->data, message->response_body->length,
+	                                                          error));
+	} else {
 	updated_entry = GDATA_ENTRY (gdata_parsable_new_from_xml (G_OBJECT_TYPE (entry), message->response_body->data, message->response_body->length,
 	                                                          error));
+	}
 	g_object_unref (message);
 
 	return updated_entry;
@@ -1741,6 +1749,7 @@ gdata_service_delete_entry (GDataService *self, GDataAuthorizationDomain *domain
 	SoupMessage *message;
 	guint status;
 	gchar *fixed_uri;
+	GDataParsableClass *klass;
 
 	g_return_val_if_fail (GDATA_IS_SERVICE (self), FALSE);
 	g_return_val_if_fail (domain == NULL || GDATA_IS_AUTHORIZATION_DOMAIN (domain), FALSE);
