@@ -230,7 +230,6 @@ GDataFeed *
 gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query, GCancellable *cancellable,
                                      GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
 {
-	const gchar *uri;
 	gchar* request_uri;
 	GDataFeed *feed;
 
@@ -244,7 +243,7 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 	if (gdata_authorizer_is_authorized_for_domain (gdata_service_get_authorizer (GDATA_SERVICE (self)),
 	                                               get_tasks_authorization_domain ()) == FALSE) {
 		g_set_error_literal (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_AUTHENTICATION_REQUIRED,
-		                     _("You must be authenticated to query your own tasklists."));
+		                     _("You must be authenticated to query your own tasks."));
 		return NULL;
 	}
 
@@ -258,16 +257,74 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 }
 
 /**
+ * gdata_tasks_service_query_tasks_async:
+ * @self: a #GDataTasksService
+ * @tasklist: a #GDataTasksTasklist
+ * @query: (allow-none): a #GDataQuery with the query parameters, or %NULL
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @progress_callback: (allow-none) (closure progress_user_data): a #GDataQueryProgressCallback to call when an entry is loaded, or %NULL
+ * @progress_user_data: (closure): data to pass to the @progress_callback function
+ * @destroy_progress_user_data: (allow-none): the function to call when @progress_callback will not be called any more, or %NULL. This function will be
+ * called with @progress_user_data as a parameter and can be used to free any memory allocated for it.
+ * @callback: a #GAsyncReadyCallback to call when the query is finished
+ * @user_data: (closure): data to pass to the @callback function
+ *
+ * Queries the service to return a list of tasks in the given @tasklist, which match @query. @self, @tasklist and @query are all reffed when this
+ * function is called, so can safely be unreffed after this function returns.
+ *
+ * Get the results of the query using gdata_service_query_finish() in the @callback.
+ *
+ * For more details, see gdata_tasks_service_query_tasks(), which is the synchronous version of this function, and gdata_service_query_async(),
+ * which is the base asynchronous query function.
+ * 
+ * Since: UNRELEASED
+ */
+void
+gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query, GCancellable *cancellable,
+                                           GDataQueryProgressCallback progress_callback, gpointer progress_user_data,
+                                           GDestroyNotify destroy_progress_user_data,
+                                           GAsyncReadyCallback callback, gpointer user_data)
+{
+	gchar *request_uri;
+
+	g_return_if_fail (GDATA_IS_TASKS_SERVICE (self));
+	g_return_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist));
+	g_return_if_fail (query == NULL || GDATA_IS_QUERY (query));
+	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+	g_return_if_fail (callback != NULL);
+
+	/* Ensure we're authenticated first */
+	if (gdata_authorizer_is_authorized_for_domain (gdata_service_get_authorizer (GDATA_SERVICE (self)),
+	                                               get_tasks_authorization_domain ()) == FALSE) {
+		GSimpleAsyncResult *result = g_simple_async_result_new (G_OBJECT (self), callback, user_data, gdata_service_query_async);
+		g_simple_async_result_set_error (result, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_AUTHENTICATION_REQUIRED, "%s",
+		                                 _("You must be authenticated to query your own tasks."));
+		g_simple_async_result_complete_in_idle (result);
+		g_object_unref (result);
+
+		return;
+	}
+
+	/* Should add /tasks as requested by API */
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
+	/* Execute the query */
+	gdata_service_query_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
+	                           progress_callback, progress_user_data, destroy_progress_user_data, callback, user_data);
+	g_free (request_uri);
+}
+
+
+/**
  * gdata_tasks_service_query_tasks_by_tasklist_id:
  * @self: a #GDataTasksService
- * @tasklist_id: a #gchar* of tasklist id
+ * @tasklist_id: a tasklist id
  * @query: (allow-none): a #GDataQuery with the query parameters, or %NULL
  * @cancellable: (allow-none): optional #GCancellable object, or %NULL
  * @progress_callback: (allow-none) (scope call) (closure progress_user_data): a #GDataQueryProgressCallback to call when an entry is loaded, or %NULL
  * @progress_user_data: (closure): data to pass to the @progress_callback function
  * @error: (allow-none): a #GError, or %NULL
  *
- * Queries the service to return a list of tasks in the given @tasklist, which match @query.
+ * Queries the service to return a list of tasks in the given tasklist with @tasklist_id, which match @query.
  *
  * For more details, see gdata_service_query().
  *
@@ -278,12 +335,11 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 GDataFeed *
 gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const gchar* tasklist_id, GDataQuery *query, GCancellable *cancellable, GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
 {
-	const gchar *uri;
 	gchar* request_uri;
 	GDataFeed *feed;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
-	//g_return_val_if_fail (tasklist != '\0', NULL);
+	g_return_val_if_fail (tasklist_id != NULL && *tasklist_id != '\0', NULL);
 	g_return_val_if_fail (query == NULL || GDATA_IS_QUERY (query), NULL);
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
@@ -306,9 +362,9 @@ gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const g
 }
 
 /**
- * gdata_tasks_service_query_tasks_async:
+ * gdata_tasks_service_query_tasks_by_tasklist_id_async:
  * @self: a #GDataTasksService
- * @tasklist: a #GDataTasksTasklist
+ * @tasklist_id: a tasklist id
  * @query: (allow-none): a #GDataQuery with the query parameters, or %NULL
  * @cancellable: (allow-none): optional #GCancellable object, or %NULL
  * @progress_callback: (allow-none) (closure progress_user_data): a #GDataQueryProgressCallback to call when an entry is loaded, or %NULL
@@ -318,26 +374,26 @@ gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const g
  * @callback: a #GAsyncReadyCallback to call when the query is finished
  * @user_data: (closure): data to pass to the @callback function
  *
- * Queries the service to return a list of tasks in the given @tasklist, which match @query. @self, @calendar and @query are all reffed when this
+ * Queries the service to return a list of tasks in the given tasklist by @tasklist_id, which match @query. @self and @query are all reffed when this
  * function is called, so can safely be unreffed after this function returns.
  *
  * Get the results of the query using gdata_service_query_finish() in the @callback.
  *
- * For more details, see gdata_tasks_service_query_tasks(), which is the synchronous version of this function, and gdata_service_query_async(),
+ * For more details, see gdata_tasks_service_query_tasks_by_tasklist_id(), which is the synchronous version of this function, and gdata_service_query_async(),
  * which is the base asynchronous query function.
  * 
  * Since: UNRELEASED
  */
 void
-gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query, GCancellable *cancellable,
+gdata_tasks_service_query_tasks_by_tasklist_id_async (GDataTasksService *self, const gchar* tasklist_id, GDataQuery *query, GCancellable *cancellable,
                                            GDataQueryProgressCallback progress_callback, gpointer progress_user_data,
                                            GDestroyNotify destroy_progress_user_data,
                                            GAsyncReadyCallback callback, gpointer user_data)
 {
-	const gchar *uri;
+	gchar *request_uri;
 
 	g_return_if_fail (GDATA_IS_TASKS_SERVICE (self));
-	g_return_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist));
+	g_return_val_if_fail (tasklist_id != NULL && *tasklist_id != '\0', NULL);
 	g_return_if_fail (query == NULL || GDATA_IS_QUERY (query));
 	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 	g_return_if_fail (callback != NULL);
@@ -354,22 +410,12 @@ gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTaskli
 		return;
 	}
 
-	/* Use the tasklist's content src */
-	uri = gdata_entry_get_content_uri (GDATA_ENTRY (tasklist));
-	if (uri == NULL) {
-		/* Erroring out is probably the safest thing to do */
-		GSimpleAsyncResult *result = g_simple_async_result_new (G_OBJECT (self), callback, user_data, gdata_service_query_async);
-		g_simple_async_result_set_error (result, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_AUTHENTICATION_REQUIRED, "%s",
-		                                 _("The tasklist did not have a content URI."));
-		g_simple_async_result_complete_in_idle (result);
-		g_object_unref (result);
-
-		return;
-	}
-
+	/* Should add /tasks as requested by API */
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", tasklist_id, "/tasks", NULL);
 	/* Execute the query */
-	gdata_service_query_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
+	gdata_service_query_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
 	                           progress_callback, progress_user_data, destroy_progress_user_data, callback, user_data);
+	g_free (request_uri);
 }
 
 /**
@@ -391,7 +437,7 @@ gdata_tasks_service_query_tasks_async (GDataTasksService *self, GDataTasksTaskli
 GDataTasksTask *
 gdata_tasks_service_insert_task (GDataTasksService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
 {
-	gchar *uri;
+	gchar *request_uri;
 	GDataEntry *entry;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
@@ -400,9 +446,9 @@ gdata_tasks_service_insert_task (GDataTasksService *self, GDataTasksTask *task, 
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
-	entry = gdata_service_insert_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (task), cancellable, error);
-	g_free (uri);
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
+	entry = gdata_service_insert_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, GDATA_ENTRY (task), cancellable, error);
+	g_free (request_uri);
 
 	return GDATA_TASKS_TASK (entry);
 }
@@ -422,7 +468,7 @@ gdata_tasks_service_insert_task (GDataTasksService *self, GDataTasksTask *task, 
  * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTask representing the inserted task and to check for possible
  * errors.
  *
- * For more details, see gdata_task_service_insert_event(), which is the synchronous version of this function, and
+ * For more details, see gdata_tasks_service_insert_event(), which is the synchronous version of this function, and
  * gdata_service_insert_entry_async(), which is the base asynchronous insertion function.
  *
  * Since: UNRELEASED
@@ -431,17 +477,17 @@ void
 gdata_tasks_service_insert_task_async (GDataTasksService *self, GDataTasksTask *task, GDataTasksTasklist *tasklist, GCancellable *cancellable,
                                            GAsyncReadyCallback callback, gpointer user_data)
 {
-	gchar *uri;
+	gchar *request_uri;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASK (task), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
 	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 
-	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
-	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (task), cancellable,
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", gdata_entry_get_id (GDATA_ENTRY (tasklist)), "/tasks", NULL);
+	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, GDATA_ENTRY (task), cancellable,
                                        callback, user_data);
-	g_free (uri);
+	g_free (request_uri);
 }
 
 /**
@@ -462,7 +508,7 @@ gdata_tasks_service_insert_task_async (GDataTasksService *self, GDataTasksTask *
 GDataTasksTasklist *
 gdata_tasks_service_insert_tasklist (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable, GError **error)
 {
-	gchar *uri;
+	gchar *request_uri;
 	GDataEntry *entry;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
@@ -470,9 +516,9 @@ gdata_tasks_service_insert_tasklist (GDataTasksService *self, GDataTasksTasklist
 	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
-	entry = gdata_service_insert_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (tasklist), cancellable, error);
-	g_free (uri);
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
+	entry = gdata_service_insert_entry (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, GDATA_ENTRY (tasklist), cancellable, error);
+	g_free (request_uri);
 
 	return GDATA_TASKS_TASKLIST (entry);
 }
@@ -491,7 +537,7 @@ gdata_tasks_service_insert_tasklist (GDataTasksService *self, GDataTasksTasklist
  * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTasklist representing the inserted tasklist and to check for possible
  * errors.
  *
- * For more details, see gdata_task_service_insert_event(), which is the synchronous version of this function, and
+ * For more details, see gdata_tasks_service_insert_tasklist(), which is the synchronous version of this function, and
  * gdata_service_insert_entry_async(), which is the base asynchronous insertion function.
  *
  * Since: UNRELEASED
@@ -500,16 +546,16 @@ void
 gdata_tasks_service_insert_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist, GCancellable *cancellable,
                                            GAsyncReadyCallback callback, gpointer user_data)
 {
-	gchar *uri;
+	gchar *request_uri;
 
 	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
 	g_return_val_if_fail (GDATA_IS_TASKS_TASKLIST (tasklist), NULL);
 	g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 
-	uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
-	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), uri, GDATA_ENTRY (tasklist), cancellable,
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/users/@me/lists", NULL);
+	gdata_service_insert_entry_async (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, GDATA_ENTRY (tasklist), cancellable,
 	                                  callback, user_data);
-	g_free (uri);
+	g_free (request_uri);
 }
 
 /**
@@ -552,7 +598,7 @@ gdata_tasks_service_delete_task (GDataTasksService *self, GDataTasksTask *task, 
  * @callback should call gdata_service_insert_entry_finish() to finish deleting task and to check for possible
  * errors.
  *
- * For more details, see gdata_task_service_delete_task(), which is the synchronous version of this function, and
+ * For more details, see gdata_tasks_service_delete_task(), which is the synchronous version of this function, and
  * gdata_service_delete_entry_async(), which is the base asynchronous insertion function.
  *
  * Since: UNRELEASED
@@ -609,7 +655,7 @@ gdata_tasks_service_delete_tasklist (GDataTasksService *self, GDataTasksTasklist
  * @callback should call gdata_service_insert_entry_finish() to finish deleting tasklist and to check for possible
  * errors.
  *
- * For more details, see gdata_task_service_delete_tasklist(), which is the synchronous version of this function, and
+ * For more details, see gdata_tasks_service_delete_tasklist(), which is the synchronous version of this function, and
  * gdata_service_delete_entry_async(), which is the base asynchronous insertion function.
  *
  * Since: UNRELEASED
@@ -626,7 +672,6 @@ gdata_tasks_service_delete_tasklist_async (GDataTasksService *self, GDataTasksTa
 	                                  callback, user_data);
 }
 
-
 /**
  * gdata_tasks_service_update_task:
  * @self: a #GDataTasksService
@@ -636,7 +681,7 @@ gdata_tasks_service_delete_tasklist_async (GDataTasksService *self, GDataTasksTa
  *
  * Update @task in online tasks service.
  *
- * For more details, see gdata_service_delete_entry().
+ * For more details, see gdata_service_update_entry().
  *
  * Return value: (transfer full): an updated #GDataTasksTask, or %NULL; unref with g_object_unref()
  *
@@ -667,7 +712,7 @@ gdata_tasks_service_update_task (GDataTasksService *self, GDataTasksTask *task, 
  * @callback should call gdata_service_insert_entry_finish() to obtain a #GDataTasksTask representing the updated task and to check for possible
  * errors.
  *
- * For more details, see gdata_task_service_update_task(), which is the synchronous version of this function, and
+ * For more details, see gdata_tasks_service_update_task(), which is the synchronous version of this function, and
  * gdata_service_update_entry_async(), which is the base asynchronous insertion function.
  *
  * Since: UNRELEASED
@@ -693,7 +738,7 @@ gdata_tasks_service_update_task_async (GDataTasksService *self, GDataTasksTask *
  *
  * Update @tasklist in online tasks service.
  *
- * For more details, see gdata_service_delete_entry().
+ * For more details, see gdata_service_update_entry().
  *
  * Return value: %TRUE on success, %FALSE otherwise	
  *
@@ -724,7 +769,7 @@ gdata_tasks_service_update_tasklist (GDataTasksService *self, GDataTasksTasklist
  * @callback should call gdata_service_update_entry_finish() to obtain a #GDataTasksTasklist representing the updated task and to check for possible
  * errors.
  *
- * For more details, see gdata_task_service_update_tasklist(), which is the synchronous version of this function, and
+ * For more details, see gdata_tasks_service_update_tasklist(), which is the synchronous version of this function, and
  * gdata_service_update_entry_async(), which is the base asynchronous insertion function.
  *
  * Since: UNRELEASED

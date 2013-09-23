@@ -103,5 +103,7 @@ void gdata_tasks_service_update_tasklist_async (GDataTasksService *self, GDataTa
 GDataFeed *gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const gchar *tasklist_id, GDataQuery *query,
                                                           GCancellable *cancellable, GDataQueryProgressCallback progress_callback,
                                                           gpointer progress_user_data, GError **error) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
-
+void gdata_tasks_service_query_tasks_by_tasklist_id_async (GDataTasksService *self, const gchar *tasklist_id, GDataQuery *query,
+                                                GCancellable *cancellable, GDataQueryProgressCallback progress_callback, gpointer progress_user_data,
+                                                GDestroyNotify destroy_progress_user_data, GAsyncReadyCallback callback, gpointer user_data);
 #endif /* !GDATA_CALENDAR_SERVICE_H */
