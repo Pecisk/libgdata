@@ -258,6 +258,55 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
 }
 
 /**
+ * gdata_tasks_service_query_tasks_by_tasklist_id:
+ * @self: a #GDataTasksService
+ * @tasklist_id: a #gchar* of tasklist id
+ * @query: (allow-none): a #GDataQuery with the query parameters, or %NULL
+ * @cancellable: (allow-none): optional #GCancellable object, or %NULL
+ * @progress_callback: (allow-none) (scope call) (closure progress_user_data): a #GDataQueryProgressCallback to call when an entry is loaded, or %NULL
+ * @progress_user_data: (closure): data to pass to the @progress_callback function
+ * @error: (allow-none): a #GError, or %NULL
+ *
+ * Queries the service to return a list of tasks in the given @tasklist, which match @query.
+ *
+ * For more details, see gdata_service_query().
+ *
+ * Return value: (transfer full): a #GDataFeed of query results; unref with g_object_unref()
+ * 
+ * Since: UNRELEASED
+ */
+GDataFeed *
+gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const gchar* tasklist_id, GDataQuery *query, GCancellable *cancellable,
+                                     GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
+{
+	const gchar *uri;
+	gchar* request_uri;
+	GDataFeed *feed;
+
+	g_return_val_if_fail (GDATA_IS_TASKS_SERVICE (self), NULL);
+	//g_return_val_if_fail (tasklist != '\0', NULL);
+	g_return_val_if_fail (query == NULL || GDATA_IS_QUERY (query), NULL);
+	g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* Ensure we're authenticated first */
+	if (gdata_authorizer_is_authorized_for_domain (gdata_service_get_authorizer (GDATA_SERVICE (self)),
+	                                               get_tasks_authorization_domain ()) == FALSE) {
+		g_set_error_literal (error, GDATA_SERVICE_ERROR, GDATA_SERVICE_ERROR_AUTHENTICATION_REQUIRED,
+		                     _("You must be authenticated to query your own tasklists."));
+		return NULL;
+	}
+
+	/* Should add /tasks as requested by API */
+	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", tasklist_id, "/tasks", NULL);
+	/* Execute the query */
+	feed = gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
+	                            progress_callback, progress_user_data, error);
+	g_free (request_uri);
+	return feed;
+}
+
+/**
  * gdata_tasks_service_query_tasks_async:
  * @self: a #GDataTasksService
  * @tasklist: a #GDataTasksTasklist
