@@ -100,7 +100,7 @@ GDataTasksTasklist *gdata_tasks_service_update_tasklist (GDataTasksService *self
                                                       GCancellable *cancellable, GError **error) G_GNUC_MALLOC G_GNUC_WARN_UNUSED_RESULT;
 void gdata_tasks_service_update_tasklist_async (GDataTasksService *self, GDataTasksTasklist *tasklist,
                                                    GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
-GFeed *gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query,
+GDataFeed *gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, GDataTasksTasklist *tasklist, GDataQuery *query,
                                                 GCancellable *cancellable, GError **error) G_GNUC_WARN_UNUSED_RESULT G_GNUC_MALLOC;
 
 #endif /* !GDATA_CALENDAR_SERVICE_H */
