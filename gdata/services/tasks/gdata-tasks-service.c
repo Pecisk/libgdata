@@ -276,7 +276,7 @@ gdata_tasks_service_query_tasks (GDataTasksService *self, GDataTasksTasklist *ta
  * Since: UNRELEASED
  */
 GDataFeed *
-gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const gchar* tasklist_id, GDataQuery *query, GCancellable *cancellable, GError **error)
+gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const gchar* tasklist_id, GDataQuery *query, GCancellable *cancellable, GDataQueryProgressCallback progress_callback, gpointer progress_user_data, GError **error)
 {
 	const gchar *uri;
 	gchar* request_uri;
@@ -300,7 +300,7 @@ gdata_tasks_service_query_tasks_by_tasklist_id (GDataTasksService *self, const g
 	request_uri = g_strconcat (_gdata_service_get_scheme (), "://www.googleapis.com/tasks/v1/lists/", tasklist_id, "/tasks", NULL);
 	/* Execute the query */
 	feed = gdata_service_query (GDATA_SERVICE (self), get_tasks_authorization_domain (), request_uri, query, GDATA_TYPE_TASKS_TASK, cancellable,
-	                            NULL, NULL, error);
+	                            progress_callback, progress_user_data, error);
 	g_free (request_uri);
 	return feed;
 }
